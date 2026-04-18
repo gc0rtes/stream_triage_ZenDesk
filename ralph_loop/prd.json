@@ -13,7 +13,7 @@
       "id": 2,
       "title": "Ticket types, seed data, and classifyTicket logic",
       "description": "Create src/types/ticket.ts with: ZDTicket interface (id: number, subject: string, status: 'open'|'hold'|'pending'|'solved', tier: 'enterprise'|'pro'|'free', holdType: 'linear'|'feature_request'|null, tags: string[], updatedAt: number (ms timestamp), replies: number, sentiment: 'positive'|'neutral'|'negative'|null, assignee: string, linear: string|null). Also export Ticket as an alias for ZDTicket (same shape — no mapping needed since we own the data). Export COLUMN_KEYS as a const array: ['priority','standard','hold_dev','hold_fr','pending','solved']. Export ColumnKey type. Create src/data/columns.ts exporting COLUMNS array (key, label, hint) and TIER_META and ASSIGNEES maps — copy values from design_example_app/data.jsx. Create src/utils/classifyTicket.ts exporting classifyTicket(t: Ticket, nowMs: number, staleHours: number): ColumnKey|null — copy the exact routing logic from design_example_app/data.jsx. Create src/utils/timeSince.ts exporting timeSince(ms: number, nowMs: number): string. Write a Vitest test in src/utils/classifyTicket.test.ts: enterprise open ticket → 'priority'; pro open fresh → 'standard'; pro open stale >48h → 'priority'; hold linear → 'hold_dev'; hold feature_request → 'hold_fr'; pending → 'pending'; solved recent → 'solved'. Run `npm test` to verify.",
-      "passes": false
+      "passes": true
     },
     {
       "id": 3,
