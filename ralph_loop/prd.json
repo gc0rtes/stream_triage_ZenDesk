@@ -25,7 +25,7 @@
       "id": 4,
       "title": "ZD API client and useTickets + useUpdateTicket hooks",
       "description": "Create src/api/zendesk.ts with zdFetch<T>(path, options?): Promise<T> using Basic Auth from VITE_ZD_EMAIL and VITE_ZD_TOKEN env vars and base URL from VITE_ZD_SUBDOMAIN (default 'stream'). Create src/api/tickets.ts exporting fetchTickets(): Promise<Ticket[]> (GET /tickets.json, return response.tickets) and updateTicketStatus(id: number, patch: Partial<Ticket>): Promise<Ticket> (PUT /tickets/{id}.json). Create src/hooks/useTickets.ts: TanStack Query useQuery with key ['tickets'], queryFn fetchTickets, staleTime 60_000. Create src/hooks/useUpdateTicket.ts: useMutation calling updateTicketStatus, with onMutate optimistic update (snapshot cache, apply change), onError rollback, onSettled invalidate ['tickets']. Wrap App in QueryClientProvider in src/main.tsx. Write a Vitest test for useTickets that mocks fetchTickets and asserts returned data. Run `npm test`.",
-      "passes": false
+      "passes": true
     },
     {
       "id": 5,
