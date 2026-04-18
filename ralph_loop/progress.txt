@@ -1,0 +1,6 @@
+#Ralph Progress Log
+
+This file tracks learnings and progress across interactions.
+Append your notes here - do not overwrite previous entries.
+
+---

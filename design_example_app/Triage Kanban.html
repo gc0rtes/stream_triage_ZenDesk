@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Triage — CS Kanban</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --sans: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      --mono: 'Geist Mono', 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body, #root { margin: 0; padding: 0; height: 100%; background: oklch(0.18 0.008 60); }
+    body { font-family: var(--sans); -webkit-font-smoothing: antialiased; overflow: hidden; }
+
+    @keyframes pulseHard {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.3); opacity: 0.5; }
+    }
+    @keyframes pulseSoft {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.55; }
+    }
+    @keyframes slideIn {
+      from { transform: translateX(20px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    .tc.tc-approaching {
+      border-color: oklch(0.80 0.16 75 / 0.5) !important;
+      background: linear-gradient(90deg, oklch(0.80 0.16 75 / 0.05), var(--surface)) !important;
+    }
+    .tc.tc-stale {
+      border-color: oklch(0.70 0.19 25 / 0.55) !important;
+      background: linear-gradient(90deg, oklch(0.70 0.19 25 / 0.08), var(--surface)) !important;
+    }
+    .tc.tc-stale::before {
+      content: '';
+      position: absolute; inset: 0;
+      border: 1px solid oklch(0.70 0.19 25 / 0.4);
+      border-radius: 6px;
+      animation: pulseSoft 2.2s ease-in-out infinite;
+      pointer-events: none;
+    }
+    .tc:hover {
+      background: var(--surface-2) !important;
+      transform: translateY(-1px);
+    }
+    .tc:active { cursor: grabbing; transform: translateY(0); }
+
+    .pulse-dot svg { animation: pulseSoft 1.4s infinite; }
+
+    .btn-accent:hover { filter: brightness(1.08); }
+
+    /* scrollbar styling */
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb {
+      background: oklch(0.30 0.012 60);
+      border-radius: 5px;
+      border: 2px solid transparent;
+      background-clip: padding-box;
+    }
+    ::-webkit-scrollbar-thumb:hover { background: oklch(0.38 0.014 60); background-clip: padding-box; border: 2px solid transparent; }
+
+    input::placeholder { color: oklch(0.56 0.01 70); }
+
+    ::selection { background: oklch(0.82 0.19 145 / 0.3); }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script type="text/babel" src="theme.jsx"></script>
+  <script type="text/babel" src="data.jsx"></script>
+  <script type="text/babel" src="icons.jsx"></script>
+  <script type="text/babel" src="card.jsx"></script>
+  <script type="text/babel" src="column.jsx"></script>
+  <script type="text/babel" src="topbar.jsx"></script>
+  <script type="text/babel" src="panels.jsx"></script>
+  <script type="text/babel" src="app.jsx"></script>
+</body>
+</html>

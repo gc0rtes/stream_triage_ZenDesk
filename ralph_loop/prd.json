@@ -1,0 +1,67 @@
+{
+  "name": "Zendesk Triage Kanban — Stream Support",
+  "description": "Dark-mode Kanban triage board for Stream support engineers. Tickets are classified into 6 computed columns based on tier, age, and hold type — not raw ZD status. Uses a CSS-var design system (oklch palette), native HTML5 drag-and-drop, TanStack Query for data, and MSW for dev mocking. Reference implementation is in design_example_app/.",
+  "agent_instructions": "See AGENT.md for tech stack, setup instructions, and development rules.",
+  "tasks": [
+    {
+      "id": 1,
+      "title": "Install Vitest + MSW; scaffold CSS-var theme",
+      "description": "Install dev dependencies: `npm install -D vitest @testing-library/react @testing-library/jest-dom jsdom @testing-library/user-event`. Add `'test': 'vitest run'` to package.json scripts. Create vitest.config.ts with jsdom environment and setupFiles pointing to src/test-setup.ts that imports @testing-library/jest-dom. Install MSW: `npm install msw --save-dev && npx msw init public/ --save`. Do NOT install Tailwind — the project uses a CSS-var design system instead. Create src/theme.ts exporting: ACCENT_PRESETS (green hue 145, amber 70, cyan 200, violet 295, coral 25), DENSITY_PRESETS (compact/comfortable/roomy with rowGap, cardPad, cardFont, headerPad values), and makeCssVars({ accentHue }) returning an object of CSS custom properties using oklch() — copy the exact token values from design_example_app/theme.jsx. Apply makeCssVars to the root div in App.tsx using a style prop. Add global CSS to src/index.css: set box-sizing border-box, remove default margins, set body background to var(--bg) and color to var(--text), add @keyframes for pulseHard (scale + opacity) and slideIn (translateX). Verify: `npm run dev` starts with a dark background. `npm run build` has no type errors.",
+      "passes": false
+    },
+    {
+      "id": 2,
+      "title": "Ticket types, seed data, and classifyTicket logic",
+      "description": "Create src/types/ticket.ts with: ZDTicket interface (id: number, subject: string, status: 'open'|'hold'|'pending'|'solved', tier: 'enterprise'|'pro'|'free', holdType: 'linear'|'feature_request'|null, tags: string[], updatedAt: number (ms timestamp), replies: number, sentiment: 'positive'|'neutral'|'negative'|null, assignee: string, linear: string|null). Also export Ticket as an alias for ZDTicket (same shape — no mapping needed since we own the data). Export COLUMN_KEYS as a const array: ['priority','standard','hold_dev','hold_fr','pending','solved']. Export ColumnKey type. Create src/data/columns.ts exporting COLUMNS array (key, label, hint) and TIER_META and ASSIGNEES maps — copy values from design_example_app/data.jsx. Create src/utils/classifyTicket.ts exporting classifyTicket(t: Ticket, nowMs: number, staleHours: number): ColumnKey|null — copy the exact routing logic from design_example_app/data.jsx. Create src/utils/timeSince.ts exporting timeSince(ms: number, nowMs: number): string. Write a Vitest test in src/utils/classifyTicket.test.ts: enterprise open ticket → 'priority'; pro open fresh → 'standard'; pro open stale >48h → 'priority'; hold linear → 'hold_dev'; hold feature_request → 'hold_fr'; pending → 'pending'; solved recent → 'solved'. Run `npm test` to verify.",
+      "passes": false
+    },
+    {
+      "id": 3,
+      "title": "MSW fixtures and handlers",
+      "description": "Create src/mocks/fixtures/tickets.ts exporting SEED_TICKETS: an array of 20 Ticket objects matching the data in design_example_app/data.jsx exactly — same ids, subjects, customers, tiers, statuses, holdTypes, updatedAt values (use Date.now() - N * 3600_000 arithmetic), replies, sentiments, assignees, linear refs. Create src/mocks/handlers.ts using MSW v2: GET handler for https://stream.zendesk.com/api/v2/tickets.json returns { tickets: SEED_TICKETS }. PUT handler for /tickets/:id.json merges body.ticket into the matching ticket and returns { ticket: updated }. Create src/mocks/browser.ts exporting setupWorker with those handlers. Wire into src/main.tsx: wrap ReactDOM render in enableMocking() that calls worker.start({ onUnhandledRequest: 'bypass' }) in DEV. Run `npm run build` — no errors.",
+      "passes": false
+    },
+    {
+      "id": 4,
+      "title": "ZD API client and useTickets + useUpdateTicket hooks",
+      "description": "Create src/api/zendesk.ts with zdFetch<T>(path, options?): Promise<T> using Basic Auth from VITE_ZD_EMAIL and VITE_ZD_TOKEN env vars and base URL from VITE_ZD_SUBDOMAIN (default 'stream'). Create src/api/tickets.ts exporting fetchTickets(): Promise<Ticket[]> (GET /tickets.json, return response.tickets) and updateTicketStatus(id: number, patch: Partial<Ticket>): Promise<Ticket> (PUT /tickets/{id}.json). Create src/hooks/useTickets.ts: TanStack Query useQuery with key ['tickets'], queryFn fetchTickets, staleTime 60_000. Create src/hooks/useUpdateTicket.ts: useMutation calling updateTicketStatus, with onMutate optimistic update (snapshot cache, apply change), onError rollback, onSettled invalidate ['tickets']. Wrap App in QueryClientProvider in src/main.tsx. Write a Vitest test for useTickets that mocks fetchTickets and asserts returned data. Run `npm test`.",
+      "passes": false
+    },
+    {
+      "id": 5,
+      "title": "useNow hook and Icons",
+      "description": "Create src/hooks/useNow.ts exporting useNow(): number — useState(Date.now()) with setInterval every 1000ms to update. Create src/components/icons.tsx exporting all icon components from design_example_app/icons.jsx, converted to TypeScript: IconSearch, IconClock, IconLinear, IconReply, IconAlert, IconFlame, IconPause, IconSparkle, IconHourglass, IconCheck, IconX, IconFilter, IconPlus, IconRefresh, IconDot, IconSmile, IconMeh, IconFrown. Each accepts { size?: number, style?: React.CSSProperties }. The base Icon component renders an SVG with currentColor stroke. No test needed. Run `npm run build` — no type errors.",
+      "passes": false
+    },
+    {
+      "id": 6,
+      "title": "TicketCard component",
+      "description": "Create src/components/Board/TicketCard.tsx. Props: t: Ticket, nowMs: number, staleHours: number, onOpen: (t: Ticket) => void, styleVariant?: 'default'|'rail'|'minimal', density?: string. Implement urgencyFor(t, nowMs, staleHours): number (0..1). Derive: approaching (u >= 0.75 && u < 1), stale (u >= 1), isEnt (tier === 'enterprise'). Compute railColor using the same priority logic as design_example_app/card.jsx. Render sub-components: TierBadge ({ tier }), AssigneeChip ({ id, size }), Sentiment ({ s, size }). Card uses inline styles with CSS vars only — no Tailwind. Implement the three styleVariants (default, rail, minimal). Use native HTML5 drag: onDragStart sets dataTransfer text/plain to ticket id. onClick calls onOpen. Apply className 'tc tc-stale' or 'tc tc-approaching' for CSS animation hooks. Write a Vitest test: renders with a mock ticket, asserts subject visible, tier badge text visible, assignee chip title present. Run `npm test`.",
+      "passes": false
+    },
+    {
+      "id": 7,
+      "title": "Column component with pressure bar",
+      "description": "Create src/components/Board/Column.tsx. Props: col: { key: ColumnKey, label: string, hint: string }, tickets: Ticket[], nowMs: number, staleHours: number, onOpen: (t: Ticket) => void, onDrop: (id: number, colKey: ColumnKey) => void, cardVariant: string, density: string. Implement pressure (0..1) from PRESSURE_SOFT_CAP=6 / PRESSURE_HARD_CAP=12. Implement urgentCount. Use HTML5 DnD: onDragOver (e.preventDefault, setOver(true)), onDragLeave (setOver(false)), onDrop (read dataTransfer, call onDrop prop). Render: column container with border highlight when over. Header with colIcon (match design_example_app/column.jsx per key), label, count badge, urgentCount badge. Hint text. Pressure bar at bottom of header (2px, fills accent/warn/danger based on pressure). Body: scrollable ticket list using TicketCard. Show 'Empty' placeholder when count=0. All inline styles with CSS vars. Write a Vitest test: mock DnD, render with 3 tickets, assert all subjects visible. Run `npm test`.",
+      "passes": false
+    },
+    {
+      "id": 8,
+      "title": "TopBar with search, filters, and BurstMeter",
+      "description": "Create src/components/TopBar.tsx. Props: query, setQuery, tierFilter (Set<string>), setTierFilter, assigneeFilter (Set<string>), setAssigneeFilter, onBurst, onReset, tickets: Ticket[], nowMs, staleHours, showBurst. Render: logo (T icon + 'Triage' + 'Support · Live' badge). Search input with IconSearch, clear button (IconX) when query is set. Tier FilterChip buttons (ENT/PRO/FREE) toggling the Set. Assignee avatar buttons toggling the Set with opacity fade for inactive. Spacer. BurstMeter component (separate function in same file): counts stale/approaching/total open tickets, shows level (calm/elevated/critical), pulsing dot, stacked bar. 'Simulate burst' button (calls onBurst). Reset button (IconRefresh). All inline CSS vars. Write a Vitest test: render TopBar, type in search input, assert setQuery called. Run `npm test`.",
+      "passes": false
+    },
+    {
+      "id": 9,
+      "title": "SidePanel and TweaksPanel",
+      "description": "Create src/components/SidePanel.tsx. Props: ticket: Ticket|null, onClose: () => void, nowMs: number. If null, return null. Fixed right drawer (width 420, slideIn animation). Header: ticket id, TierBadge, close button. Body: subject, metadata grid (customer, assignee, last update, status, linear if present, replies, sentiment). Tags. Recent activity (3 hardcoded rows using timeSince). Footer: 'Reply' accent button, 'Open in Zendesk' ghost button. Create src/components/TweaksPanel.tsx. Props: tweaks (object with accent, density, staleHours, cardVariant, columnWidth, showBurst), setTweaks, visible. Fixed bottom-right floating panel. Rows for: accent color swatches, density segmented control, stale cutoff (24h/48h/72h), card style, column layout. Show burst toggle. Only renders when visible=true. Write a Vitest test for SidePanel: renders ticket subject and customer. Run `npm test`.",
+      "passes": false
+    },
+    {
+      "id": 10,
+      "title": "Board component and full App wiring",
+      "description": "Create src/components/Board/Board.tsx. Uses useTickets, useUpdateTicket, useNow. Local state: selected (Ticket|null), query, tierFilter (Set), assigneeFilter (Set), tweaks object (accent:'green', density:'comfortable', staleHours:48, cardVariant:'rail', columnWidth:'wide', showBurst:true). Filter visible tickets by query (id, subject, customer, tags) and active tier/assignee filters. Group into 6 columns using classifyTicket. Sort each column (priority: oldest first, others: newest first). onDrop handler: maps colKey to status/tag changes following the exact logic in design_example_app/app.jsx — including the priority tag, holdType, linear stub generation, and tier demotion for standard. Also implement simulateBurst (5 fresh open tickets) and reset. Ticket aging effect (setInterval: nudge open ticket updatedAt back 120_000ms every 60s). Apply makeCssVars to root container inline style. Render TopBar + 6 Columns (width from tweaks.columnWidth) + SidePanel + TweaksPanel. Update App.tsx to render Board inside QueryClientProvider. Wire editMode via window.addEventListener('message') for the TweaksPanel. Run `npm run dev` and verify the board renders with all 6 columns populated. Run `npm run build` and `npm test` — both must pass with zero errors.",
+      "passes": false
+    }
+  ]
+}
