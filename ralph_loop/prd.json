@@ -19,7 +19,7 @@
       "id": 3,
       "title": "MSW fixtures and handlers",
       "description": "Create src/mocks/fixtures/tickets.ts exporting SEED_TICKETS: an array of 20 Ticket objects matching the data in design_example_app/data.jsx exactly — same ids, subjects, customers, tiers, statuses, holdTypes, updatedAt values (use Date.now() - N * 3600_000 arithmetic), replies, sentiments, assignees, linear refs. Create src/mocks/handlers.ts using MSW v2: GET handler for https://stream.zendesk.com/api/v2/tickets.json returns { tickets: SEED_TICKETS }. PUT handler for /tickets/:id.json merges body.ticket into the matching ticket and returns { ticket: updated }. Create src/mocks/browser.ts exporting setupWorker with those handlers. Wire into src/main.tsx: wrap ReactDOM render in enableMocking() that calls worker.start({ onUnhandledRequest: 'bypass' }) in DEV. Run `npm run build` — no errors.",
-      "passes": false
+      "passes": true
     },
     {
       "id": 4,
