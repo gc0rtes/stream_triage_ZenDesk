@@ -4,3 +4,5 @@ This file tracks learnings and progress across interactions.
 Append your notes here - do not overwrite previous entries.
 
 ---
+
+[Task 1] Install Vitest + MSW; scaffold CSS-var theme — Scaffolded Vite React TS project, installed Vitest/RTL/MSW, created src/theme.ts with ACCENT_PRESETS/DENSITY_PRESETS/makeCssVars (oklch palette), updated App.tsx and index.css. Build and lint clean.

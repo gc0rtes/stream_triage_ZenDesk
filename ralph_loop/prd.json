@@ -7,7 +7,7 @@
       "id": 1,
       "title": "Install Vitest + MSW; scaffold CSS-var theme",
       "description": "Install dev dependencies: `npm install -D vitest @testing-library/react @testing-library/jest-dom jsdom @testing-library/user-event`. Add `'test': 'vitest run'` to package.json scripts. Create vitest.config.ts with jsdom environment and setupFiles pointing to src/test-setup.ts that imports @testing-library/jest-dom. Install MSW: `npm install msw --save-dev && npx msw init public/ --save`. Do NOT install Tailwind — the project uses a CSS-var design system instead. Create src/theme.ts exporting: ACCENT_PRESETS (green hue 145, amber 70, cyan 200, violet 295, coral 25), DENSITY_PRESETS (compact/comfortable/roomy with rowGap, cardPad, cardFont, headerPad values), and makeCssVars({ accentHue }) returning an object of CSS custom properties using oklch() — copy the exact token values from design_example_app/theme.jsx. Apply makeCssVars to the root div in App.tsx using a style prop. Add global CSS to src/index.css: set box-sizing border-box, remove default margins, set body background to var(--bg) and color to var(--text), add @keyframes for pulseHard (scale + opacity) and slideIn (translateX). Verify: `npm run dev` starts with a dark background. `npm run build` has no type errors.",
-      "passes": false
+      "passes": true
     },
     {
       "id": 2,
