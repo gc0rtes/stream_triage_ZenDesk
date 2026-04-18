@@ -37,7 +37,7 @@
       "id": 6,
       "title": "TicketCard component",
       "description": "Create src/components/Board/TicketCard.tsx. Props: t: Ticket, nowMs: number, staleHours: number, onOpen: (t: Ticket) => void, styleVariant?: 'default'|'rail'|'minimal', density?: string. Implement urgencyFor(t, nowMs, staleHours): number (0..1). Derive: approaching (u >= 0.75 && u < 1), stale (u >= 1), isEnt (tier === 'enterprise'). Compute railColor using the same priority logic as design_example_app/card.jsx. Render sub-components: TierBadge ({ tier }), AssigneeChip ({ id, size }), Sentiment ({ s, size }). Card uses inline styles with CSS vars only — no Tailwind. Implement the three styleVariants (default, rail, minimal). Use native HTML5 drag: onDragStart sets dataTransfer text/plain to ticket id. onClick calls onOpen. Apply className 'tc tc-stale' or 'tc tc-approaching' for CSS animation hooks. Write a Vitest test: renders with a mock ticket, asserts subject visible, tier badge text visible, assignee chip title present. Run `npm test`.",
-      "passes": false
+      "passes": true
     },
     {
       "id": 7,
