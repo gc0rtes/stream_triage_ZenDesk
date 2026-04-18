@@ -55,7 +55,7 @@
       "id": 9,
       "title": "SidePanel and TweaksPanel",
       "description": "Create src/components/SidePanel.tsx. Props: ticket: Ticket|null, onClose: () => void, nowMs: number. If null, return null. Fixed right drawer (width 420, slideIn animation). Header: ticket id, TierBadge, close button. Body: subject, metadata grid (customer, assignee, last update, status, linear if present, replies, sentiment). Tags. Recent activity (3 hardcoded rows using timeSince). Footer: 'Reply' accent button, 'Open in Zendesk' ghost button. Create src/components/TweaksPanel.tsx. Props: tweaks (object with accent, density, staleHours, cardVariant, columnWidth, showBurst), setTweaks, visible. Fixed bottom-right floating panel. Rows for: accent color swatches, density segmented control, stale cutoff (24h/48h/72h), card style, column layout. Show burst toggle. Only renders when visible=true. Write a Vitest test for SidePanel: renders ticket subject and customer. Run `npm test`.",
-      "passes": false
+      "passes": true
     },
     {
       "id": 10,
