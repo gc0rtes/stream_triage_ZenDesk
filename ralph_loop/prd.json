@@ -31,7 +31,7 @@
       "id": 5,
       "title": "useNow hook and Icons",
       "description": "Create src/hooks/useNow.ts exporting useNow(): number — useState(Date.now()) with setInterval every 1000ms to update. Create src/components/icons.tsx exporting all icon components from design_example_app/icons.jsx, converted to TypeScript: IconSearch, IconClock, IconLinear, IconReply, IconAlert, IconFlame, IconPause, IconSparkle, IconHourglass, IconCheck, IconX, IconFilter, IconPlus, IconRefresh, IconDot, IconSmile, IconMeh, IconFrown. Each accepts { size?: number, style?: React.CSSProperties }. The base Icon component renders an SVG with currentColor stroke. No test needed. Run `npm run build` — no type errors.",
-      "passes": false
+      "passes": true
     },
     {
       "id": 6,
