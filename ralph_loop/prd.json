@@ -61,7 +61,7 @@
       "id": 10,
       "title": "Board component and full App wiring",
       "description": "Create src/components/Board/Board.tsx. Uses useTickets, useUpdateTicket, useNow. Local state: selected (Ticket|null), query, tierFilter (Set), assigneeFilter (Set), tweaks object (accent:'green', density:'comfortable', staleHours:48, cardVariant:'rail', columnWidth:'wide', showBurst:true). Filter visible tickets by query (id, subject, customer, tags) and active tier/assignee filters. Group into 6 columns using classifyTicket. Sort each column (priority: oldest first, others: newest first). onDrop handler: maps colKey to status/tag changes following the exact logic in design_example_app/app.jsx — including the priority tag, holdType, linear stub generation, and tier demotion for standard. Also implement simulateBurst (5 fresh open tickets) and reset. Ticket aging effect (setInterval: nudge open ticket updatedAt back 120_000ms every 60s). Apply makeCssVars to root container inline style. Render TopBar + 6 Columns (width from tweaks.columnWidth) + SidePanel + TweaksPanel. Update App.tsx to render Board inside QueryClientProvider. Wire editMode via window.addEventListener('message') for the TweaksPanel. Run `npm run dev` and verify the board renders with all 6 columns populated. Run `npm run build` and `npm test` — both must pass with zero errors.",
-      "passes": false
+      "passes": true
     }
   ]
 }

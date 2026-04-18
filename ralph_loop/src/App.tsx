@@ -1,12 +1,7 @@
-import type { CSSProperties } from 'react';
-import { makeCssVars } from './theme';
+import Board from './components/Board/Board';
 
 function App() {
-  return (
-    <div style={makeCssVars({ accentHue: 145 }) as CSSProperties}>
-      <p>Kanban Board</p>
-    </div>
-  );
+  return <Board />;
 }
 
 export default App;
