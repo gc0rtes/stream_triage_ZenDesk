@@ -49,7 +49,7 @@
       "id": 8,
       "title": "TopBar with search, filters, and BurstMeter",
       "description": "Create src/components/TopBar.tsx. Props: query, setQuery, tierFilter (Set<string>), setTierFilter, assigneeFilter (Set<string>), setAssigneeFilter, onBurst, onReset, tickets: Ticket[], nowMs, staleHours, showBurst. Render: logo (T icon + 'Triage' + 'Support · Live' badge). Search input with IconSearch, clear button (IconX) when query is set. Tier FilterChip buttons (ENT/PRO/FREE) toggling the Set. Assignee avatar buttons toggling the Set with opacity fade for inactive. Spacer. BurstMeter component (separate function in same file): counts stale/approaching/total open tickets, shows level (calm/elevated/critical), pulsing dot, stacked bar. 'Simulate burst' button (calls onBurst). Reset button (IconRefresh). All inline CSS vars. Write a Vitest test: render TopBar, type in search input, assert setQuery called. Run `npm test`.",
-      "passes": false
+      "passes": true
     },
     {
       "id": 9,
