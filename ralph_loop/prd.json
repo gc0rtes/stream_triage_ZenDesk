@@ -43,7 +43,7 @@
       "id": 7,
       "title": "Column component with pressure bar",
       "description": "Create src/components/Board/Column.tsx. Props: col: { key: ColumnKey, label: string, hint: string }, tickets: Ticket[], nowMs: number, staleHours: number, onOpen: (t: Ticket) => void, onDrop: (id: number, colKey: ColumnKey) => void, cardVariant: string, density: string. Implement pressure (0..1) from PRESSURE_SOFT_CAP=6 / PRESSURE_HARD_CAP=12. Implement urgentCount. Use HTML5 DnD: onDragOver (e.preventDefault, setOver(true)), onDragLeave (setOver(false)), onDrop (read dataTransfer, call onDrop prop). Render: column container with border highlight when over. Header with colIcon (match design_example_app/column.jsx per key), label, count badge, urgentCount badge. Hint text. Pressure bar at bottom of header (2px, fills accent/warn/danger based on pressure). Body: scrollable ticket list using TicketCard. Show 'Empty' placeholder when count=0. All inline styles with CSS vars. Write a Vitest test: mock DnD, render with 3 tickets, assert all subjects visible. Run `npm test`.",
-      "passes": false
+      "passes": true
     },
     {
       "id": 8,
