@@ -2,6 +2,18 @@ import type { Ticket } from '../types/ticket'
 import type { ZDComment } from '../types/comment'
 import { zdFetch } from './zendesk'
 
+export interface ZDTicketField {
+  id: number
+  type: string
+  title: string
+  custom_field_options?: Array<{ name: string; value: string }>
+}
+
+export interface CustomFieldValue {
+  id: number
+  value: string | string[] | boolean | null
+}
+
 export const MY_ASSIGNEE_ID = 1515461428242
 
 interface RawZDTicket {
@@ -93,12 +105,14 @@ export async function assignTicket(id: number): Promise<Ticket> {
 
 export interface FullTicket extends Ticket {
   comments: ZDComment[]
+  custom_fields: CustomFieldValue[]
+  ticket_form_id: number | null
 }
 
 export async function fetchFullTicket(id: number): Promise<FullTicket> {
   const [{ ticket }, { comments }] = await Promise.all([
-    zdFetch<{ ticket: Ticket }>(`/tickets/${id}.json`),
-    zdFetch<{ comments: Array<Omit<ZDComment, 'author_name'>> }>(`/tickets/${id}/comments.json`),
+    zdFetch<{ ticket: Ticket & { custom_fields?: CustomFieldValue[]; ticket_form_id?: number | null } }>(`/tickets/${id}.json`),
+    zdFetch<{ comments: Array<Omit<ZDComment, 'author_name' | 'attachments'> & { attachments?: ZDComment['attachments'] }> }>(`/tickets/${id}/comments.json`),
   ])
 
   const authorIds = [...new Set(comments.map(c => c.author_id))]
@@ -110,15 +124,82 @@ export async function fetchFullTicket(id: number): Promise<FullTicket> {
   const enrichedComments: ZDComment[] = comments.map(c => ({
     ...c,
     author_name: userMap[c.author_id] ?? `User ${c.author_id}`,
+    attachments: c.attachments ?? [],
   }))
 
-  return { ...ticket, comments: enrichedComments }
+  return {
+    ...ticket,
+    comments: enrichedComments,
+    custom_fields: ticket.custom_fields ?? [],
+    ticket_form_id: ticket.ticket_form_id ?? null,
+  }
 }
 
-export async function postReply(id: number, body: string, isPublic: boolean): Promise<ZDComment> {
-  const data = await zdFetch<{ comment: Omit<ZDComment, 'author_name'> }>(`/tickets/${id}/comments.json`, {
-    method: 'POST',
-    body: JSON.stringify({ ticket: { comment: { body, public: isPublic } } }),
+export async function fetchFormFields(formId: number): Promise<{
+  fieldIds: number[]
+  fields: ZDTicketField[]
+}> {
+  const [{ ticket_form }, { ticket_fields }] = await Promise.all([
+    zdFetch<{ ticket_form: { ticket_field_ids: number[] } }>(`/ticket_forms/${formId}.json`),
+    zdFetch<{ ticket_fields: ZDTicketField[] }>('/ticket_fields.json'),
+  ])
+  const idSet = new Set(ticket_form.ticket_field_ids)
+  return {
+    fieldIds: ticket_form.ticket_field_ids,
+    fields: ticket_fields.filter(f => idSet.has(f.id)),
+  }
+}
+
+export async function updateCustomFields(
+  ticketId: number,
+  customFields: CustomFieldValue[]
+): Promise<void> {
+  await zdFetch<unknown>(`/tickets/${ticketId}.json`, {
+    method: 'PUT',
+    body: JSON.stringify({ ticket: { custom_fields: customFields } }),
   })
-  return { ...data.comment, author_name: 'Guilherme Cortes' }
+}
+
+export async function submitReply(
+  id: number,
+  opts: { body: string; isPublic: boolean; status?: string; uploads?: string[] }
+): Promise<void> {
+  await zdFetch<unknown>(`/tickets/${id}.json`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      ticket: {
+        ...(opts.status ? { status: opts.status } : {}),
+        comment: {
+          body: opts.body,
+          public: opts.isPublic,
+          ...(opts.uploads?.length ? { uploads: opts.uploads } : {}),
+        },
+      },
+    }),
+  })
+}
+
+export async function uploadAttachment(file: File): Promise<string> {
+  const params = new URLSearchParams({ filename: file.name })
+  const data = await zdFetch<{ upload: { token: string } }>(
+    `/uploads.json?${params}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': file.type || 'application/octet-stream' },
+      body: file,
+    }
+  )
+  return data.upload.token
+}
+
+export interface ZDMacro {
+  id: number
+  title: string
+  active: boolean
+  actions: Array<{ field: string; value: string | string[] }>
+}
+
+export async function fetchMacros(): Promise<ZDMacro[]> {
+  const data = await zdFetch<{ macros: ZDMacro[] }>('/macros.json?active=true&per_page=100')
+  return data.macros
 }

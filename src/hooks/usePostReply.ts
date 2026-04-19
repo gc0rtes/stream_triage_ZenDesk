@@ -1,13 +1,13 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { FullTicket } from '../api/tickets'
-import { postReply, MY_ASSIGNEE_ID } from '../api/tickets'
+import { submitReply, MY_ASSIGNEE_ID } from '../api/tickets'
 
 export function usePostReply(ticketId: number | null) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ body, isPublic }: { body: string; isPublic: boolean }) =>
-      postReply(ticketId!, body, isPublic),
+    mutationFn: (vars: { body: string; isPublic: boolean; status?: string; uploads?: string[] }) =>
+      submitReply(ticketId!, vars),
     onMutate: async ({ body, isPublic }) => {
       await queryClient.cancelQueries({ queryKey: ['ticket', ticketId] })
       const prev = queryClient.getQueryData<FullTicket>(['ticket', ticketId])
@@ -22,6 +22,7 @@ export function usePostReply(ticketId: number | null) {
             body,
             public: isPublic,
             created_at: new Date().toISOString(),
+            attachments: [],
           }],
         }
       })
@@ -32,6 +33,7 @@ export function usePostReply(ticketId: number | null) {
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: ['ticket', ticketId] })
+      void queryClient.invalidateQueries({ queryKey: ['tickets'] })
     },
   })
 }
