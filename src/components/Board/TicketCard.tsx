@@ -9,6 +9,26 @@ import {
   IconDot, IconSmile, IconMeh, IconFrown,
 } from '../icons';
 
+const STATUS_STYLE: Record<string, { color: string; bg: string; border: string }> = {
+  open:    { color: 'var(--accent)',  bg: 'var(--accent-soft)',  border: 'var(--accent)' },
+  pending: { color: 'var(--info)',    bg: 'var(--info-soft)',    border: 'var(--info)' },
+  hold:    { color: 'var(--warn)',    bg: 'var(--warn-soft)',    border: 'var(--warn)' },
+  solved:  { color: 'var(--text-mute)', bg: 'var(--surface-2)', border: 'var(--border-strong)' },
+}
+
+interface StatusBadgeProps { status: string }
+function StatusBadge({ status }: StatusBadgeProps) {
+  const s = STATUS_STYLE[status] ?? STATUS_STYLE.open
+  return (
+    <span style={{
+      fontSize: 10, fontFamily: 'var(--mono)', letterSpacing: 0.6, fontWeight: 600,
+      padding: '2px 5px', borderRadius: 3,
+      background: s.bg, color: s.color, border: `1px solid ${s.border}`,
+      textTransform: 'uppercase', whiteSpace: 'nowrap',
+    }}>{status}</span>
+  )
+}
+
 interface TierBadgeProps { tier: string }
 export function TierBadge({ tier }: TierBadgeProps) {
   const meta = TIER_META[tier];
@@ -130,6 +150,7 @@ export function TicketCard({ t, nowMs, staleHours, onOpen, onAssign, style, styl
           #{t.id}
         </span>
         <TierBadge tier={t.tier} />
+        <StatusBadge status={t.status} />
         <div style={{ flex: 1 }} />
         <span style={{
           display: 'inline-flex', alignItems: 'center', gap: 3,
