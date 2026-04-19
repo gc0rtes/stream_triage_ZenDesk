@@ -2,7 +2,7 @@ import type { Ticket } from '../types/ticket';
 import { TIER_META, ASSIGNEES } from '../data/columns';
 import { AssigneeChip } from './Board/TicketCard';
 import {
-  IconSearch, IconX, IconPlus, IconRefresh,
+  IconSearch, IconX, IconPlus, IconRefresh, IconColumns,
 } from './icons';
 
 interface BurstMeterProps {
@@ -119,6 +119,8 @@ interface TopBarProps {
   onReset: () => void;
   onRefresh: () => void;
   isRefreshing: boolean;
+  onToggleColConfig: () => void;
+  colConfigActive: boolean;
   tickets: Ticket[];
   nowMs: number;
   staleHours: number;
@@ -129,7 +131,7 @@ export function TopBar({
   query, setQuery,
   tierFilter, setTierFilter,
   assigneeFilter, setAssigneeFilter,
-  onBurst, onRefresh, isRefreshing,
+  onBurst, onRefresh, isRefreshing, onToggleColConfig, colConfigActive,
   tickets, nowMs, staleHours, showBurst,
 }: TopBarProps) {
   return (
@@ -236,6 +238,16 @@ export function TopBar({
         fontFamily: 'inherit',
       }}>
         <IconPlus size={12} /> Simulate burst
+      </button>
+
+      <button onClick={onToggleColConfig} title="Configure columns" style={{
+        padding: 7, borderRadius: 5,
+        background: colConfigActive ? 'var(--accent-soft)' : 'transparent',
+        color: colConfigActive ? 'var(--accent)' : 'var(--text-dim)',
+        border: `1px solid ${colConfigActive ? 'var(--accent)' : 'var(--border)'}`,
+        cursor: 'pointer', display: 'inline-flex', alignItems: 'center',
+      }}>
+        <IconColumns size={13} />
       </button>
 
       <button onClick={onRefresh} disabled={isRefreshing} title="Refresh tickets" style={{

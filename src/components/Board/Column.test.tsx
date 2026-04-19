@@ -24,6 +24,17 @@ function makeTicket(id: number, subject: string): Ticket {
 
 const col = { key: 'standard' as const, label: 'Standard open', hint: 'Awaiting first or next touch' };
 
+const baseProps = {
+  col,
+  nowMs: NOW,
+  staleHours: 48,
+  onOpen: vi.fn(),
+  onDrop: vi.fn(),
+  onToggleCollapse: vi.fn(),
+  cardVariant: 'default',
+  density: 'comfortable',
+};
+
 describe('Column', () => {
   it('renders all ticket subjects', () => {
     const tickets = [
@@ -31,36 +42,14 @@ describe('Column', () => {
       makeTicket(2, 'Second ticket'),
       makeTicket(3, 'Third ticket'),
     ];
-    render(
-      <Column
-        col={col}
-        tickets={tickets}
-        nowMs={NOW}
-        staleHours={48}
-        onOpen={vi.fn()}
-        onDrop={vi.fn()}
-        cardVariant="default"
-        density="comfortable"
-      />
-    );
+    render(<Column {...baseProps} tickets={tickets} />);
     expect(screen.getByText('First ticket')).toBeTruthy();
     expect(screen.getByText('Second ticket')).toBeTruthy();
     expect(screen.getByText('Third ticket')).toBeTruthy();
   });
 
   it('shows Empty placeholder when no tickets', () => {
-    render(
-      <Column
-        col={col}
-        tickets={[]}
-        nowMs={NOW}
-        staleHours={48}
-        onOpen={vi.fn()}
-        onDrop={vi.fn()}
-        cardVariant="default"
-        density="comfortable"
-      />
-    );
+    render(<Column {...baseProps} tickets={[]} />);
     expect(screen.getByText('Empty')).toBeTruthy();
   });
 });

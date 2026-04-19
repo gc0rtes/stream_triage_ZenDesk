@@ -33,6 +33,8 @@ const defaultProps = {
   onReset: vi.fn(),
   onRefresh: vi.fn(),
   isRefreshing: false,
+  onToggleColConfig: vi.fn(),
+  colConfigActive: false,
   tickets: [makeTicket(1), makeTicket(2)],
   nowMs: NOW,
   staleHours: 48,

@@ -92,6 +92,18 @@ export function IconDot(p: BaseIconProps) {
   return <Icon {...p} fill="currentColor" stroke="none" path={<circle cx="12" cy="12" r="4"/>} />;
 }
 
+export function IconColumns(p: BaseIconProps) {
+  return <Icon {...p} path={<><rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="3" width="5" height="18" rx="1"/><rect x="17" y="3" width="4" height="18" rx="1"/></>} />;
+}
+
+export function IconChevronLeft(p: BaseIconProps) {
+  return <Icon {...p} path={<path d="M15 18l-6-6 6-6"/>} />;
+}
+
+export function IconChevronRight(p: BaseIconProps) {
+  return <Icon {...p} path={<path d="M9 18l6-6-6-6"/>} />;
+}
+
 export function IconSmile(p: BaseIconProps) {
   return <Icon {...p} path={<><circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><circle cx="9" cy="10" r=".6" fill="currentColor"/><circle cx="15" cy="10" r=".6" fill="currentColor"/></>} />;
 }

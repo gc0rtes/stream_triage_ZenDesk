@@ -4,7 +4,7 @@ import type { ColumnKey } from '../../types/ticket';
 import { DENSITY_PRESETS } from '../../theme';
 import {
   IconFlame, IconDot, IconLinear, IconSparkle,
-  IconHourglass, IconCheck, IconAlert, IconPlus,
+  IconHourglass, IconCheck, IconAlert, IconPlus, IconChevronLeft,
 } from '../icons';
 import { TicketCard } from './TicketCard';
 
@@ -24,11 +24,13 @@ interface ColumnProps {
   cardVariant: string;
   density: string;
   highlighted?: boolean;
+  collapsed?: boolean;
+  onToggleCollapse: () => void;
 }
 
 export function Column({
   col, tickets, nowMs, staleHours, onOpen, onDrop, onAssign,
-  cardVariant, density, highlighted = false,
+  cardVariant, density, highlighted = false, collapsed = false, onToggleCollapse,
 }: ColumnProps) {
   const count = tickets.length;
   const pressure = Math.max(0, Math.min(1,
@@ -66,6 +68,36 @@ export function Column({
     pending:    <IconHourglass size={12} style={{ color: 'var(--info)'  }} />,
     solved:     <IconCheck   size={12} style={{ color: 'var(--accent)'  }} />,
   };
+
+  if (collapsed) {
+    return (
+      <div
+        onClick={onToggleCollapse}
+        title={`Expand ${col.label}`}
+        style={{
+          width: 40, flexShrink: 0, display: 'flex', flexDirection: 'column',
+          background: 'var(--bg-2)', border: '1px solid var(--border)',
+          borderRadius: 8, cursor: 'pointer', overflow: 'hidden',
+          alignItems: 'center', paddingTop: 14, paddingBottom: 14, gap: 10,
+          transition: 'border-color 0.15s',
+        }}
+        onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--accent)' }}
+        onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border)' }}
+      >
+        {colIcon[col.key]}
+        <span style={{
+          writingMode: 'vertical-rl', transform: 'rotate(180deg)',
+          fontSize: 11, fontWeight: 600, color: 'var(--text)',
+          whiteSpace: 'nowrap', letterSpacing: 0.1,
+        }}>{col.label}</span>
+        <span style={{
+          fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--text-mute)',
+          background: 'var(--surface-2)', padding: '2px 5px',
+          borderRadius: 3, fontWeight: 600,
+        }}>{count}</span>
+      </div>
+    )
+  }
 
   return (
     <div
@@ -114,6 +146,17 @@ export function Column({
               <IconAlert size={10} /> {urgentCount}
             </span>
           )}
+          <button
+            onClick={e => { e.stopPropagation(); onToggleCollapse() }}
+            title="Collapse column"
+            style={{
+              background: 'transparent', border: 'none', cursor: 'pointer',
+              color: 'var(--text-mute)', display: 'inline-flex', padding: 2,
+              borderRadius: 3, lineHeight: 1,
+            }}
+          >
+            <IconChevronLeft size={13} />
+          </button>
         </div>
         <div style={{
           fontSize: 11, color: 'var(--text-mute)', marginTop: 3,

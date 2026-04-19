@@ -68,6 +68,13 @@ export default function Board() {
   const [burstTickets, setBurstTickets] = useState<Ticket[]>([]);
   const [selected, setSelected] = useState<Ticket | null>(null);
   const [editMode, setEditMode] = useState(false);
+  const [showColConfig, setShowColConfig] = useState(false);
+  const [hiddenColumns, setHiddenColumns] = useState<Set<ColumnKey>>(
+    () => new Set(JSON.parse(localStorage.getItem('zd-hidden-cols') ?? '[]') as ColumnKey[])
+  );
+  const [collapsedColumns, setCollapsedColumns] = useState<Set<ColumnKey>>(
+    () => new Set(JSON.parse(localStorage.getItem('zd-collapsed-cols') ?? '[]') as ColumnKey[])
+  );
   const [query, setQuery] = useState('');
   const [tierFilter, setTierFilter] = useState<Set<string>>(new Set());
   const [assigneeFilter, setAssigneeFilter] = useState<Set<string>>(new Set());
@@ -184,6 +191,24 @@ export default function Board() {
     void queryClient.invalidateQueries({ queryKey: ['tickets'] });
   }, [queryClient]);
 
+  const toggleHidden = useCallback((key: ColumnKey) => {
+    setHiddenColumns(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      localStorage.setItem('zd-hidden-cols', JSON.stringify([...next]));
+      return next;
+    });
+  }, []);
+
+  const toggleCollapsed = useCallback((key: ColumnKey) => {
+    setCollapsedColumns(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      localStorage.setItem('zd-collapsed-cols', JSON.stringify([...next]));
+      return next;
+    });
+  }, []);
+
   const accentHue = ACCENT_PRESETS[tweaks.accent as keyof typeof ACCENT_PRESETS]?.hue ?? 145;
   const cssVars = makeCssVars({ accentHue });
   const colWidth = tweaks.columnWidth === 'narrow' ? 272 : 316;
@@ -210,11 +235,48 @@ export default function Board() {
         onReset={reset}
         onRefresh={handleRefresh}
         isRefreshing={isFetching}
+        onToggleColConfig={() => setShowColConfig(v => !v)}
+        colConfigActive={showColConfig}
         tickets={allTickets}
         nowMs={nowMs}
         staleHours={tweaks.staleHours}
         showBurst={tweaks.showBurst}
       />
+      <div style={{ position: 'relative' }}>
+        {showColConfig && (
+          <>
+            <div onClick={() => setShowColConfig(false)} style={{ position: 'fixed', inset: 0, zIndex: 25 }} />
+            <div style={{
+              position: 'absolute', top: 8, right: 18, zIndex: 30,
+              background: 'var(--surface)', border: '1px solid var(--border)',
+              borderRadius: 8, boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+              padding: '12px 16px', minWidth: 220,
+            }}>
+              <div style={{ fontSize: 10, fontFamily: 'var(--mono)', color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 10 }}>
+                Visible columns
+              </div>
+              {COLUMNS.map(col => (
+                <label key={col.key} style={{
+                  display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer',
+                  padding: '5px 0', fontSize: 12, color: 'var(--text)', userSelect: 'none',
+                }}>
+                  <input
+                    type="checkbox"
+                    checked={!hiddenColumns.has(col.key)}
+                    onChange={() => toggleHidden(col.key)}
+                    style={{ cursor: 'pointer', accentColor: 'var(--accent)' }}
+                  />
+                  {col.label}
+                  <span style={{ marginLeft: 'auto', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>
+                    {byColumn[col.key]?.length ?? 0}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
       <div style={{
         flex: 1,
         overflow: 'auto',
@@ -223,21 +285,26 @@ export default function Board() {
         gap: 14,
         alignItems: 'stretch',
       }}>
-        {COLUMNS.map(col => (
-          <div key={col.key} style={{ width: colWidth, flexShrink: 0, display: 'flex' }}>
-            <Column
-              col={col}
-              tickets={byColumn[col.key] ?? []}
-              nowMs={nowMs}
-              staleHours={tweaks.staleHours}
-              onOpen={setSelected}
-              onDrop={onDrop}
-              onAssign={(id) => assignMutation.mutate(id)}
-              cardVariant={tweaks.cardVariant}
-              density={tweaks.density}
-            />
-          </div>
-        ))}
+        {COLUMNS.filter(col => !hiddenColumns.has(col.key)).map(col => {
+          const isCollapsed = collapsedColumns.has(col.key);
+          return (
+            <div key={col.key} style={{ width: isCollapsed ? 40 : colWidth, flexShrink: 0, display: 'flex' }}>
+              <Column
+                col={col}
+                tickets={byColumn[col.key] ?? []}
+                nowMs={nowMs}
+                staleHours={tweaks.staleHours}
+                onOpen={setSelected}
+                onDrop={onDrop}
+                onAssign={(id) => assignMutation.mutate(id)}
+                cardVariant={tweaks.cardVariant}
+                density={tweaks.density}
+                collapsed={isCollapsed}
+                onToggleCollapse={() => toggleCollapsed(col.key)}
+              />
+            </div>
+          );
+        })}
       </div>
       <SidePanel ticket={selected} onClose={() => setSelected(null)} nowMs={nowMs} />
       <TweaksPanel tweaks={tweaks} setTweaks={updateTweaks} visible={editMode} />
