@@ -31,6 +31,8 @@ const defaultProps = {
   setAssigneeFilter: vi.fn(),
   onBurst: vi.fn(),
   onReset: vi.fn(),
+  onRefresh: vi.fn(),
+  isRefreshing: false,
   tickets: [makeTicket(1), makeTicket(2)],
   nowMs: NOW,
   staleHours: 48,

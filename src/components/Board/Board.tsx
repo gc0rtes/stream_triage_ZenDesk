@@ -6,6 +6,7 @@ import { COLUMNS } from '../../data/columns';
 import { classifyTicket } from '../../utils/classifyTicket';
 import { makeCssVars, ACCENT_PRESETS } from '../../theme';
 import { useTickets } from '../../hooks/useTickets';
+import { useIncrementalSync } from '../../hooks/useIncrementalSync';
 import { useUpdateTicket } from '../../hooks/useUpdateTicket';
 import { useAssignTicket } from '../../hooks/useAssignTicket';
 import { useNow } from '../../hooks/useNow';
@@ -29,11 +30,13 @@ function applyDrop(t: Ticket, colKey: ColumnKey, staleHours: number): Ticket {
   } else if (colKey === 'hold_dev') {
     n.status = 'hold';
     n.holdType = 'linear';
+    n.tags = n.tags.filter(tg => tg !== 'feature_request_v2');
     if (!n.linear) n.linear = 'ENG-' + (2200 + Math.floor(Math.random() * 99));
   } else if (colKey === 'hold_fr') {
     n.status = 'hold';
     n.holdType = 'feature_request';
     n.linear = null;
+    if (!n.tags.includes('feature_request_v2')) n.tags = [...n.tags, 'feature_request_v2'];
   } else if (colKey === 'pending') {
     n.status = 'pending';
     n.holdType = null;
@@ -55,7 +58,8 @@ const BURST_SAMPLES: Array<{ subject: string; customer: string; tier: 'pro' | 'f
 const ASSIGNEE_CYCLE = ['MK', 'JR', 'SL', 'AB'] as const;
 
 export default function Board() {
-  const { data: serverTickets = [] } = useTickets();
+  const { data: serverTickets = [], isFetching, refetch } = useTickets();
+  useIncrementalSync();
   const mutation = useUpdateTicket();
   const assignMutation = useAssignTicket();
   const queryClient = useQueryClient();
@@ -171,6 +175,10 @@ export default function Board() {
     setBurstTickets(ts => [...newTickets, ...ts]);
   }, []);
 
+  const handleRefresh = useCallback(() => {
+    void refetch();
+  }, [refetch]);
+
   const reset = useCallback(() => {
     setBurstTickets([]);
     void queryClient.invalidateQueries({ queryKey: ['tickets'] });
@@ -200,6 +208,8 @@ export default function Board() {
         setAssigneeFilter={setAssigneeFilter}
         onBurst={simulateBurst}
         onReset={reset}
+        onRefresh={handleRefresh}
+        isRefreshing={isFetching}
         tickets={allTickets}
         nowMs={nowMs}
         staleHours={tweaks.staleHours}

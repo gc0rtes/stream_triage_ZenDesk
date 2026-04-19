@@ -117,6 +117,8 @@ interface TopBarProps {
   setAssigneeFilter: (s: Set<string>) => void;
   onBurst: () => void;
   onReset: () => void;
+  onRefresh: () => void;
+  isRefreshing: boolean;
   tickets: Ticket[];
   nowMs: number;
   staleHours: number;
@@ -127,7 +129,7 @@ export function TopBar({
   query, setQuery,
   tierFilter, setTierFilter,
   assigneeFilter, setAssigneeFilter,
-  onBurst, onReset,
+  onBurst, onRefresh, isRefreshing,
   tickets, nowMs, staleHours, showBurst,
 }: TopBarProps) {
   return (
@@ -236,13 +238,16 @@ export function TopBar({
         <IconPlus size={12} /> Simulate burst
       </button>
 
-      <button onClick={onReset} title="Reset" style={{
+      <button onClick={onRefresh} disabled={isRefreshing} title="Refresh tickets" style={{
         padding: 7, borderRadius: 5,
         background: 'transparent', color: 'var(--text-dim)',
-        border: '1px solid var(--border)', cursor: 'pointer',
+        border: '1px solid var(--border)', cursor: isRefreshing ? 'default' : 'pointer',
         display: 'inline-flex', alignItems: 'center',
+        opacity: isRefreshing ? 0.6 : 1,
       }}>
-        <IconRefresh size={13} />
+        <IconRefresh size={13} style={{
+          animation: isRefreshing ? 'spin 0.8s linear infinite' : 'none',
+        }} />
       </button>
     </div>
   );

@@ -28,7 +28,7 @@ interface RawZDTicket {
 }
 
 function deriveTier(tags: string[]): Ticket['tier'] {
-  if (tags.some(t => t.includes('enterprise'))) return 'enterprise'
+  if (tags.some(t => t.includes('enterprise') && !t.includes('non_enterprise'))) return 'enterprise'
   if (tags.some(t => t === 'free' || t.includes('_free'))) return 'free'
   return 'pro'
 }
@@ -55,6 +55,20 @@ function mapZDTicket(t: RawZDTicket): Ticket {
     assignee: t.assignee_id === MY_ASSIGNEE_ID ? 'GC' : (t.assignee_id ? 'OTHER' : ''),
     linear: null,
     customer: t.organization_id ? 'Org-' + String(t.organization_id).slice(-5) : 'Unknown',
+  }
+}
+
+export async function fetchIncrementalTickets(startTimeSec: number): Promise<{
+  tickets: Ticket[]
+  endTime: number
+}> {
+  const data = await zdFetch<{ tickets: RawZDTicket[] | null; end_time: number | null }>(
+    `/incremental/tickets.json?start_time=${startTimeSec}&per_page=100`
+  )
+  return {
+    tickets: (data.tickets ?? []).map(mapZDTicket),
+    // ZD returns null end_time when no records match — fall back to the input cursor
+    endTime: data.end_time ?? startTimeSec,
   }
 }
 
@@ -88,9 +102,15 @@ export async function fetchTickets(): Promise<Ticket[]> {
 }
 
 export async function updateTicketStatus(id: number, patch: Partial<Ticket>): Promise<Ticket> {
+  // Only send fields ZD understands — strip local-only properties
+  const zdPatch: Record<string, unknown> = {}
+  if (patch.status !== undefined) zdPatch.status = patch.status
+  if (patch.tags !== undefined) zdPatch.tags = patch.tags
+  if (patch.priority !== undefined) zdPatch.priority = patch.priority
+
   const data = await zdFetch<{ ticket: Ticket }>(`/tickets/${id}.json`, {
     method: 'PUT',
-    body: JSON.stringify({ ticket: patch }),
+    body: JSON.stringify({ ticket: zdPatch }),
   })
   return data.ticket
 }
