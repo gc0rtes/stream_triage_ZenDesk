@@ -55,12 +55,13 @@ interface TicketCardProps {
   nowMs: number;
   staleHours: number;
   onOpen: (t: Ticket) => void;
+  onAssign?: (id: number) => void;
   style?: CSSProperties;
   styleVariant?: 'default' | 'rail' | 'minimal';
   density?: string;
 }
 
-export function TicketCard({ t, nowMs, staleHours, onOpen, style, styleVariant = 'default', density }: TicketCardProps) {
+export function TicketCard({ t, nowMs, staleHours, onOpen, onAssign, style, styleVariant = 'default', density }: TicketCardProps) {
   const u = urgencyFor(t, nowMs, staleHours);
   const approaching = t.status === 'open' && u >= 0.75 && u < 1;
   const stale = t.status === 'open' && u >= 1;
@@ -181,6 +182,20 @@ export function TicketCard({ t, nowMs, staleHours, onOpen, style, styleVariant =
           </span>
         )}
         <div style={{ flex: 1 }} />
+        {onAssign && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onAssign(t.id); }}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 4,
+              padding: '3px 8px', borderRadius: 4, border: '1px solid var(--accent)',
+              background: 'var(--accent-soft)', color: 'var(--accent)',
+              fontSize: 10, fontWeight: 600, letterSpacing: 0.4,
+              textTransform: 'uppercase', cursor: 'pointer',
+            }}
+          >
+            Assign to me
+          </button>
+        )}
         {stale && (
           <span style={{
             display: 'inline-flex', alignItems: 'center', gap: 3,

@@ -4,7 +4,7 @@ import type { ColumnKey } from '../../types/ticket';
 import { DENSITY_PRESETS } from '../../theme';
 import {
   IconFlame, IconDot, IconLinear, IconSparkle,
-  IconHourglass, IconCheck, IconAlert,
+  IconHourglass, IconCheck, IconAlert, IconPlus,
 } from '../icons';
 import { TicketCard } from './TicketCard';
 
@@ -20,13 +20,14 @@ interface ColumnProps {
   staleHours: number;
   onOpen: (t: Ticket) => void;
   onDrop: (id: number, colKey: ColumnKey) => void;
+  onAssign?: (id: number) => void;
   cardVariant: string;
   density: string;
   highlighted?: boolean;
 }
 
 export function Column({
-  col, tickets, nowMs, staleHours, onOpen, onDrop,
+  col, tickets, nowMs, staleHours, onOpen, onDrop, onAssign,
   cardVariant, density, highlighted = false,
 }: ColumnProps) {
   const count = tickets.length;
@@ -57,12 +58,13 @@ export function Column({
   const d = DENSITY_PRESETS[(density as keyof typeof DENSITY_PRESETS)] ?? DENSITY_PRESETS.comfortable;
 
   const colIcon: Record<ColumnKey, React.ReactElement> = {
-    priority: <IconFlame    size={13} style={{ color: 'var(--accent)'   }} />,
-    standard: <IconDot      size={10} style={{ color: 'var(--text-dim)' }} />,
-    hold_dev: <IconLinear   size={12} style={{ color: 'var(--violet)'   }} />,
-    hold_fr:  <IconSparkle  size={12} style={{ color: 'var(--warn)'     }} />,
-    pending:  <IconHourglass size={12} style={{ color: 'var(--info)'    }} />,
-    solved:   <IconCheck    size={12} style={{ color: 'var(--accent)'   }} />,
+    unassigned: <IconPlus    size={12} style={{ color: 'var(--warn)'    }} />,
+    priority:   <IconFlame   size={13} style={{ color: 'var(--accent)'  }} />,
+    standard:   <IconDot     size={10} style={{ color: 'var(--text-dim)'}} />,
+    hold_dev:   <IconLinear  size={12} style={{ color: 'var(--violet)'  }} />,
+    hold_fr:    <IconSparkle size={12} style={{ color: 'var(--warn)'    }} />,
+    pending:    <IconHourglass size={12} style={{ color: 'var(--info)'  }} />,
+    solved:     <IconCheck   size={12} style={{ color: 'var(--accent)'  }} />,
   };
 
   return (
@@ -152,6 +154,7 @@ export function Column({
             nowMs={nowMs}
             staleHours={staleHours}
             onOpen={onOpen}
+            onAssign={col.key === 'unassigned' ? onAssign : undefined}
             styleVariant={cardVariant as 'default' | 'rail' | 'minimal'}
             density={density}
           />

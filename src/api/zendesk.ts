@@ -1,11 +1,17 @@
+// In dev, requests go to /api/v2 — the Vite proxy forwards them to Zendesk with auth.
+// In prod, requests go directly to the ZD subdomain using Basic Auth.
+const IS_DEV = import.meta.env.DEV
+
 const ZD_EMAIL = import.meta.env.VITE_ZD_EMAIL ?? ''
 const ZD_TOKEN = import.meta.env.VITE_ZD_TOKEN ?? ''
-const ZD_SUBDOMAIN = import.meta.env.VITE_ZD_SUBDOMAIN ?? 'stream'
+const ZD_SUBDOMAIN = import.meta.env.VITE_ZD_SUBDOMAIN ?? 'getstream'
 
-const BASE_URL = `https://${ZD_SUBDOMAIN}.zendesk.com/api/v2`
+const BASE_URL = IS_DEV
+  ? '/api/v2'
+  : `https://${ZD_SUBDOMAIN}.zendesk.com/api/v2`
 
 const AUTH_HEADER =
-  ZD_EMAIL && ZD_TOKEN
+  !IS_DEV && ZD_EMAIL && ZD_TOKEN
     ? `Basic ${btoa(`${ZD_EMAIL}/token:${ZD_TOKEN}`)}`
     : undefined
 

@@ -1,0 +1,900 @@
+{
+  "ticket": {
+    "url": "https://getstream.zendesk.com/api/v2/tickets/79977.json",
+    "id": 79977,
+    "external_id": "69e26cc9acb1c44b56196ee9",
+    "via": {
+      "channel": "api",
+      "source": {
+        "from": {},
+        "to": {},
+        "rel": null
+      }
+    },
+    "created_at": "2026-04-17T17:24:28Z",
+    "updated_at": "2026-04-17T20:20:17Z",
+    "generated_timestamp": 1776457217,
+    "type": null,
+    "subject": "Reconfiguration of Email Alerts for Usage and Alert Thresholds.",
+    "raw_subject": "Reconfiguration of Email Alerts for Usage and Alert Thresholds.",
+    "description": "Hello! We receive email alerts regarding usage that sometimes raise concerns internally but they are a bit misconfigured.\nIs it possible to reconfigure them? otherwise several people are alerted every month but no action is really required\n• PCC shows 25k allowance while we have 30k. Also an alert at 50% is not efficient for us, we always hit 13-14k. Maybe at 80% it would make more sense.\n• video usage: we always use more than the 100$ monthly, maybe we can set a higher limit for the alert based on our usual consumption.\nalso how can we manage who receives these alerts?\n\n\nthanks for your help\n\n------------------------------------------------\n**AI Generated Summary**\nCustomer Ruggero Bonora requests reconfiguration of email alerts for usage concerns due to misconfiguration. Asks to adjust alert thresholds for PCC allowance, suggesting 80% instead of 50%. Also, requests higher limit alerts for video usage based on monthly consumption. Seeks guidance on managing recipients of these alerts.\n---\n\n\n> Ticket created from this message in **#yoobic_stream** via Thena",
+    "priority": "normal",
+    "status": "open",
+    "recipient": null,
+    "requester_id": 14470100771351,
+    "submitter_id": 14470100771351,
+    "assignee_id": 1515461428242,
+    "organization_id": 17284174902551,
+    "group_id": 360013505174,
+    "collaborator_ids": [],
+    "follower_ids": [],
+    "email_cc_ids": [],
+    "forum_topic_id": null,
+    "problem_id": null,
+    "has_incidents": false,
+    "is_public": true,
+    "due_at": null,
+    "tags": [
+      "1",
+      "chat_enterprise",
+      "dashboard_v2",
+      "enterprise-new",
+      "false",
+      "feeds_free",
+      "other_v2",
+      "slack_notified",
+      "thena",
+      "video_enterprise",
+      "video_v2"
+    ],
+    "custom_fields": [
+      {
+        "id": 360036472993,
+        "value": null
+      },
+      {
+        "id": 360027234513,
+        "value": null
+      },
+      {
+        "id": 360027234673,
+        "value": null
+      },
+      {
+        "id": 360027255214,
+        "value": null
+      },
+      {
+        "id": 360029461773,
+        "value": "feeds_free"
+      },
+      {
+        "id": 360029461913,
+        "value": "chat_enterprise"
+      },
+      {
+        "id": 360031699033,
+        "value": null
+      },
+      {
+        "id": 360047278014,
+        "value": false
+      },
+      {
+        "id": 360055895894,
+        "value": null
+      },
+      {
+        "id": 360055997774,
+        "value": null
+      },
+      {
+        "id": 360056707154,
+        "value": null
+      },
+      {
+        "id": 360056913633,
+        "value": null
+      },
+      {
+        "id": 360056914753,
+        "value": null
+      },
+      {
+        "id": 360057004653,
+        "value": null
+      },
+      {
+        "id": 360057006293,
+        "value": null
+      },
+      {
+        "id": 1500000872742,
+        "value": null
+      },
+      {
+        "id": 1500000874982,
+        "value": null
+      },
+      {
+        "id": 1500000875222,
+        "value": null
+      },
+      {
+        "id": 1500000875362,
+        "value": null
+      },
+      {
+        "id": 1500000875422,
+        "value": null
+      },
+      {
+        "id": 1500001292221,
+        "value": false
+      },
+      {
+        "id": 1500003218382,
+        "value": false
+      },
+      {
+        "id": 1500003962762,
+        "value": false
+      },
+      {
+        "id": 1500005704641,
+        "value": false
+      },
+      {
+        "id": 1500005760262,
+        "value": false
+      },
+      {
+        "id": 1500006519181,
+        "value": false
+      },
+      {
+        "id": 1500006924702,
+        "value": false
+      },
+      {
+        "id": 1500007006721,
+        "value": false
+      },
+      {
+        "id": 1500012041822,
+        "value": "1"
+      },
+      {
+        "id": 1900006607225,
+        "value": null
+      },
+      {
+        "id": 4691059708567,
+        "value": "false"
+      },
+      {
+        "id": 6899688586519,
+        "value": null
+      },
+      {
+        "id": 7478522482839,
+        "value": null
+      },
+      {
+        "id": 8823803789719,
+        "value": null
+      },
+      {
+        "id": 8823805755159,
+        "value": null
+      },
+      {
+        "id": 9830166801047,
+        "value": false
+      },
+      {
+        "id": 10236834779927,
+        "value": null
+      },
+      {
+        "id": 10809712125335,
+        "value": "dashboard_v2"
+      },
+      {
+        "id": 10809757901207,
+        "value": "other_v2"
+      },
+      {
+        "id": 10809828872087,
+        "value": "video_v2"
+      },
+      {
+        "id": 10809932823959,
+        "value": null
+      },
+      {
+        "id": 10810014573335,
+        "value": null
+      },
+      {
+        "id": 10810021357335,
+        "value": null
+      },
+      {
+        "id": 10810046436247,
+        "value": null
+      },
+      {
+        "id": 10810057262871,
+        "value": null
+      },
+      {
+        "id": 10810132726551,
+        "value": null
+      },
+      {
+        "id": 10810145234199,
+        "value": null
+      },
+      {
+        "id": 10810180568855,
+        "value": null
+      },
+      {
+        "id": 10810242449303,
+        "value": null
+      },
+      {
+        "id": 10810463781655,
+        "value": null
+      },
+      {
+        "id": 10810573409303,
+        "value": null
+      },
+      {
+        "id": 10810771495447,
+        "value": null
+      },
+      {
+        "id": 10810780302359,
+        "value": null
+      },
+      {
+        "id": 10810800005655,
+        "value": null
+      },
+      {
+        "id": 11119013500439,
+        "value": null
+      },
+      {
+        "id": 12070851647895,
+        "value": null
+      },
+      {
+        "id": 12070853837591,
+        "value": null
+      },
+      {
+        "id": 13659137880727,
+        "value": null
+      },
+      {
+        "id": 14387037556375,
+        "value": null
+      },
+      {
+        "id": 21856738993559,
+        "value": "video_enterprise"
+      },
+      {
+        "id": 26892850172439,
+        "value": null
+      },
+      {
+        "id": 26893553003287,
+        "value": null
+      },
+      {
+        "id": 29983189565847,
+        "value": null
+      },
+      {
+        "id": 33536057996311,
+        "value": null
+      },
+      {
+        "id": 36128658330519,
+        "value": null
+      }
+    ],
+    "satisfaction_rating": {
+      "score": "unoffered"
+    },
+    "sharing_agreement_ids": [],
+    "custom_status_id": 1900006124225,
+    "encoded_id": "ZNDPL3-VR39K",
+    "fields": [
+      {
+        "id": 360036472993,
+        "value": null
+      },
+      {
+        "id": 360027234513,
+        "value": null
+      },
+      {
+        "id": 360027234673,
+        "value": null
+      },
+      {
+        "id": 360027255214,
+        "value": null
+      },
+      {
+        "id": 360029461773,
+        "value": "feeds_free"
+      },
+      {
+        "id": 360029461913,
+        "value": "chat_enterprise"
+      },
+      {
+        "id": 360031699033,
+        "value": null
+      },
+      {
+        "id": 360047278014,
+        "value": false
+      },
+      {
+        "id": 360055895894,
+        "value": null
+      },
+      {
+        "id": 360055997774,
+        "value": null
+      },
+      {
+        "id": 360056707154,
+        "value": null
+      },
+      {
+        "id": 360056913633,
+        "value": null
+      },
+      {
+        "id": 360056914753,
+        "value": null
+      },
+      {
+        "id": 360057004653,
+        "value": null
+      },
+      {
+        "id": 360057006293,
+        "value": null
+      },
+      {
+        "id": 1500000872742,
+        "value": null
+      },
+      {
+        "id": 1500000874982,
+        "value": null
+      },
+      {
+        "id": 1500000875222,
+        "value": null
+      },
+      {
+        "id": 1500000875362,
+        "value": null
+      },
+      {
+        "id": 1500000875422,
+        "value": null
+      },
+      {
+        "id": 1500001292221,
+        "value": false
+      },
+      {
+        "id": 1500003218382,
+        "value": false
+      },
+      {
+        "id": 1500003962762,
+        "value": false
+      },
+      {
+        "id": 1500005704641,
+        "value": false
+      },
+      {
+        "id": 1500005760262,
+        "value": false
+      },
+      {
+        "id": 1500006519181,
+        "value": false
+      },
+      {
+        "id": 1500006924702,
+        "value": false
+      },
+      {
+        "id": 1500007006721,
+        "value": false
+      },
+      {
+        "id": 1500012041822,
+        "value": "1"
+      },
+      {
+        "id": 1900006607225,
+        "value": null
+      },
+      {
+        "id": 4691059708567,
+        "value": "false"
+      },
+      {
+        "id": 6899688586519,
+        "value": null
+      },
+      {
+        "id": 7478522482839,
+        "value": null
+      },
+      {
+        "id": 8823803789719,
+        "value": null
+      },
+      {
+        "id": 8823805755159,
+        "value": null
+      },
+      {
+        "id": 9830166801047,
+        "value": false
+      },
+      {
+        "id": 10236834779927,
+        "value": null
+      },
+      {
+        "id": 10809712125335,
+        "value": "dashboard_v2"
+      },
+      {
+        "id": 10809757901207,
+        "value": "other_v2"
+      },
+      {
+        "id": 10809828872087,
+        "value": "video_v2"
+      },
+      {
+        "id": 10809932823959,
+        "value": null
+      },
+      {
+        "id": 10810014573335,
+        "value": null
+      },
+      {
+        "id": 10810021357335,
+        "value": null
+      },
+      {
+        "id": 10810046436247,
+        "value": null
+      },
+      {
+        "id": 10810057262871,
+        "value": null
+      },
+      {
+        "id": 10810132726551,
+        "value": null
+      },
+      {
+        "id": 10810145234199,
+        "value": null
+      },
+      {
+        "id": 10810180568855,
+        "value": null
+      },
+      {
+        "id": 10810242449303,
+        "value": null
+      },
+      {
+        "id": 10810463781655,
+        "value": null
+      },
+      {
+        "id": 10810573409303,
+        "value": null
+      },
+      {
+        "id": 10810771495447,
+        "value": null
+      },
+      {
+        "id": 10810780302359,
+        "value": null
+      },
+      {
+        "id": 10810800005655,
+        "value": null
+      },
+      {
+        "id": 11119013500439,
+        "value": null
+      },
+      {
+        "id": 12070851647895,
+        "value": null
+      },
+      {
+        "id": 12070853837591,
+        "value": null
+      },
+      {
+        "id": 13659137880727,
+        "value": null
+      },
+      {
+        "id": 14387037556375,
+        "value": null
+      },
+      {
+        "id": 21856738993559,
+        "value": "video_enterprise"
+      },
+      {
+        "id": 26892850172439,
+        "value": null
+      },
+      {
+        "id": 26893553003287,
+        "value": null
+      },
+      {
+        "id": 29983189565847,
+        "value": null
+      },
+      {
+        "id": 33536057996311,
+        "value": null
+      },
+      {
+        "id": 36128658330519,
+        "value": null
+      }
+    ],
+    "followup_ids": [],
+    "ticket_form_id": 37257437662487,
+    "brand_id": 360003144254,
+    "allow_channelback": false,
+    "allow_attachments": true,
+    "from_messaging_channel": false,
+    "support_type": "agent"
+  },
+  "comments": [
+    {
+      "id": 39828460444567,
+      "type": "Comment",
+      "author_id": 14470100771351,
+      "body": "Hello! We receive email alerts regarding usage that sometimes raise concerns internally but they are a bit misconfigured.\nIs it possible to reconfigure them? otherwise several people are alerted every month but no action is really required\n• PCC shows 25k allowance while we have 30k. Also an alert at 50% is not efficient for us, we always hit 13-14k. Maybe at 80% it would make more sense.\n• video usage: we always use more than the 100$ monthly, maybe we can set a higher limit for the alert based on our usual consumption.\nalso how can we manage who receives these alerts?\n\n\nthanks for your help\n\n------------------------------------------------\n**AI Generated Summary**\nCustomer Ruggero Bonora requests reconfiguration of email alerts for usage concerns due to misconfiguration. Asks to adjust alert thresholds for PCC allowance, suggesting 80% instead of 50%. Also, requests higher limit alerts for video usage based on monthly consumption. Seeks guidance on managing recipients of these alerts.\n---\n\n\n> Ticket created from this message in **#yoobic_stream** via Thena",
+      "html_body": "<div class=\"zd-comment\" dir=\"auto\">Hello! We receive email alerts regarding usage that sometimes raise concerns internally but they are a bit misconfigured.<br>Is it possible to reconfigure them? otherwise several people are alerted every month but no action is really required<br>• PCC shows 25k allowance while we have 30k. Also an alert at 50% is not efficient for us, we always hit 13-14k. Maybe at 80% it would make more sense. <br>• video usage: we always use more than the 100$ monthly, maybe we can set a higher limit for the alert based on our usual consumption.<br>also how can we manage who receives these alerts?<br><br><br>thanks for your help<br><br>------------------------------------------------<br><b>AI Generated Summary</b> <br>Customer Ruggero Bonora requests reconfiguration of email alerts for usage concerns due to misconfiguration. Asks to adjust alert thresholds for PCC allowance, suggesting 80% instead of 50%. Also, requests higher limit alerts for video usage based on monthly consumption. Seeks guidance on managing recipients of these alerts.<br>---<br><br><blockquote>Ticket created from <a href=\"https://getstream.slack.com/archives/C04N9RP7LUF/p1776446542211569?thread_ts=1776446542.211569&amp;cid=C04N9RP7LUF\" rel=\"noopener noreferrer\">this message</a> in <b>#yoobic_stream</b> via Thena</blockquote></div>",
+      "plain_body": "Hello! We receive email alerts regarding usage that sometimes raise concerns internally but they are a bit misconfigured.\nIs it possible to reconfigure them? otherwise several people are alerted every month but no action is really required\n• PCC shows 25k allowance while we have 30k. Also an alert at 50% is not efficient for us, we always hit 13-14k. Maybe at 80% it would make more sense. \n• video usage: we always use more than the 100$ monthly, maybe we can set a higher limit for the alert based on our usual consumption.\nalso how can we manage who receives these alerts?\n\n\nthanks for your help\n\n------------------------------------------------\nAI Generated Summary \nCustomer Ruggero Bonora requests reconfiguration of email alerts for usage concerns due to misconfiguration. Asks to adjust alert thresholds for PCC allowance, suggesting 80% instead of 50%. Also, requests higher limit alerts for video usage based on monthly consumption. Seeks guidance on managing recipients of these alerts.\n---\n\n Ticket created from this message in #yoobic_stream via Thena",
+      "public": true,
+      "attachments": [
+        {
+          "url": "https://getstream.zendesk.com/api/v2/attachments/39828427901975.json",
+          "id": 39828427901975,
+          "file_name": "Screenshot 2026-04-17 at 18.17.56.png",
+          "content_url": "https://getstream.zendesk.com/attachments/token/crcJ9PaCyFvMKk9xouHvgKdkq/?name=Screenshot+2026-04-17+at+18.17.56.png",
+          "mapped_content_url": "https://support.getstream.io/attachments/token/crcJ9PaCyFvMKk9xouHvgKdkq/?name=Screenshot+2026-04-17+at+18.17.56.png",
+          "content_type": "image/png",
+          "size": 245373,
+          "width": 1866,
+          "height": 1144,
+          "inline": false,
+          "deleted": false,
+          "malware_access_override": false,
+          "malware_scan_result": "malware_not_found",
+          "thumbnails": [
+            {
+              "url": "https://getstream.zendesk.com/api/v2/attachments/39828460179607.json",
+              "id": 39828460179607,
+              "file_name": "Screenshot_2026-04-17_at_18.17.56_thumb.png",
+              "content_url": "https://getstream.zendesk.com/attachments/token/QvvzxVVDhxXrfUMnO2fcyFIHx/?name=Screenshot_2026-04-17_at_18.17.56_thumb.png",
+              "mapped_content_url": "https://support.getstream.io/attachments/token/QvvzxVVDhxXrfUMnO2fcyFIHx/?name=Screenshot_2026-04-17_at_18.17.56_thumb.png",
+              "content_type": "image/png",
+              "size": 3102,
+              "width": 80,
+              "height": 49,
+              "inline": false,
+              "deleted": false,
+              "malware_access_override": false,
+              "malware_scan_result": "not_scanned"
+            }
+          ]
+        },
+        {
+          "url": "https://getstream.zendesk.com/api/v2/attachments/39828474416791.json",
+          "id": 39828474416791,
+          "file_name": "Screenshot 2026-04-17 at 18.17.43.png",
+          "content_url": "https://getstream.zendesk.com/attachments/token/aGTHJ31WZ6l9OcYM958h4MXE4/?name=Screenshot+2026-04-17+at+18.17.43.png",
+          "mapped_content_url": "https://support.getstream.io/attachments/token/aGTHJ31WZ6l9OcYM958h4MXE4/?name=Screenshot+2026-04-17+at+18.17.43.png",
+          "content_type": "image/png",
+          "size": 176366,
+          "width": 1856,
+          "height": 1002,
+          "inline": false,
+          "deleted": false,
+          "malware_access_override": false,
+          "malware_scan_result": "malware_not_found",
+          "thumbnails": [
+            {
+              "url": "https://getstream.zendesk.com/api/v2/attachments/39828474474007.json",
+              "id": 39828474474007,
+              "file_name": "Screenshot_2026-04-17_at_18.17.43_thumb.png",
+              "content_url": "https://getstream.zendesk.com/attachments/token/37Ga2Poqu0pygxU26i5xp6uEi/?name=Screenshot_2026-04-17_at_18.17.43_thumb.png",
+              "mapped_content_url": "https://support.getstream.io/attachments/token/37Ga2Poqu0pygxU26i5xp6uEi/?name=Screenshot_2026-04-17_at_18.17.43_thumb.png",
+              "content_type": "image/png",
+              "size": 2116,
+              "width": 80,
+              "height": 43,
+              "inline": false,
+              "deleted": false,
+              "malware_access_override": false,
+              "malware_scan_result": "not_scanned"
+            }
+          ]
+        }
+      ],
+      "audit_id": 39828460444439,
+      "via": {
+        "channel": "api",
+        "source": {
+          "from": {},
+          "to": {},
+          "rel": null
+        }
+      },
+      "created_at": "2026-04-17T17:24:29Z",
+      "metadata": {
+        "system": {
+          "client": "axios/0.27.2",
+          "ip_address": "44.213.174.166",
+          "location": "Ashburn, VA, United States",
+          "latitude": 39.0469,
+          "longitude": -77.4903
+        },
+        "custom": {}
+      }
+    },
+    {
+      "id": 39828688148631,
+      "type": "Comment",
+      "author_id": 1515461428242,
+      "body": "Guilherme Cortes: Hi Ruggero, let me pass this feedback to the team.\n\nRegarding notifications, it looks like all admins are subscribed to these notifications by default, but you can configure whether you receive email alerts in the profile > notification tab here:\nhttps://dashboard.getstream.io/user/notifications\n\n---\n\n\n> Slack thread from **#yoobic_stream**. This message was sent via Thena",
+      "html_body": "<div class=\"zd-comment\" dir=\"auto\">Guilherme Cortes: Hi Ruggero, let me pass this feedback to the team.<br><br>Regarding notifications, it looks like all admins are subscribed to these notifications by default, but you can configure whether you receive email alerts in the profile &gt; notification tab here:<br><a href=\"https://dashboard.getstream.io/user/notifications\" rel=\"noopener noreferrer\">https://dashboard.getstream.io/user/notifications</a><br><br>---<br><br><blockquote> Slack <a href=\"https://getstream.slack.com/archives/C04N9RP7LUF/p1776447046249179?thread_ts=1776446542.211569&amp;cid=C04N9RP7LUF\" rel=\"noopener noreferrer\">thread</a> from <b>#yoobic_stream</b>. This message was sent via Thena</blockquote></div>",
+      "plain_body": "Guilherme Cortes: Hi Ruggero, let me pass this feedback to the team.\n\nRegarding notifications, it looks like all admins are subscribed to these notifications by default, but you can configure whether you receive email alerts in the profile &gt; notification tab here:\nhttps://dashboard.getstream.io/user/notifications\n\n---\n\n  Slack thread from #yoobic_stream. This message was sent via Thena",
+      "public": true,
+      "attachments": [
+        {
+          "url": "https://getstream.zendesk.com/api/v2/attachments/39828752490135.json",
+          "id": 39828752490135,
+          "file_name": "Screenshot 2026-04-17 at 14.28.05.png",
+          "content_url": "https://getstream.zendesk.com/attachments/token/pwVvJIDv4RI0kEPnz6biG6TcU/?name=Screenshot+2026-04-17+at+14.28.05.png",
+          "mapped_content_url": "https://support.getstream.io/attachments/token/pwVvJIDv4RI0kEPnz6biG6TcU/?name=Screenshot+2026-04-17+at+14.28.05.png",
+          "content_type": "image/png",
+          "size": 78647,
+          "width": 1247,
+          "height": 895,
+          "inline": false,
+          "deleted": false,
+          "malware_access_override": false,
+          "malware_scan_result": "malware_not_found",
+          "thumbnails": [
+            {
+              "url": "https://getstream.zendesk.com/api/v2/attachments/39828752513431.json",
+              "id": 39828752513431,
+              "file_name": "Screenshot_2026-04-17_at_14.28.05_thumb.png",
+              "content_url": "https://getstream.zendesk.com/attachments/token/sOQIKGklvnPR0zoJVlN6UBckO/?name=Screenshot_2026-04-17_at_14.28.05_thumb.png",
+              "mapped_content_url": "https://support.getstream.io/attachments/token/sOQIKGklvnPR0zoJVlN6UBckO/?name=Screenshot_2026-04-17_at_14.28.05_thumb.png",
+              "content_type": "image/png",
+              "size": 1867,
+              "width": 80,
+              "height": 57,
+              "inline": false,
+              "deleted": false,
+              "malware_access_override": false,
+              "malware_scan_result": "not_scanned"
+            }
+          ]
+        }
+      ],
+      "audit_id": 39828737534615,
+      "via": {
+        "channel": "api",
+        "source": {
+          "from": {},
+          "to": {},
+          "rel": null
+        }
+      },
+      "created_at": "2026-04-17T17:30:49Z",
+      "metadata": {
+        "system": {
+          "client": "axios/0.27.2",
+          "ip_address": "44.213.174.166",
+          "location": "Ashburn, VA, United States",
+          "latitude": 39.0469,
+          "longitude": -77.4903
+        },
+        "custom": {},
+        "flags": [
+          11
+        ],
+        "flags_options": {
+          "11": {
+            "message": {
+              "user": "Luis Gereda",
+              "user_id": 1515897934142
+            },
+            "trusted": false
+          }
+        },
+        "trusted": false
+      }
+    },
+    {
+      "id": 39834685510807,
+      "type": "Comment",
+      "author_id": 14470100771351,
+      "body": "Ruggero Bonora: thanks @Guilherme Cortes (Stream)\nif we disable this, are there other notifications that may be missed and useful?\n\n---\n\n\n> Slack thread from **#yoobic_stream**. This message was sent via Thena",
+      "html_body": "<div class=\"zd-comment\" dir=\"auto\">Ruggero Bonora: thanks @Guilherme Cortes (Stream)<br>if we disable this, are there other notifications that may be missed and useful?<br><br>---<br><br><blockquote> Slack <a href=\"https://getstream.slack.com/archives/C04N9RP7LUF/p1776457213847649?thread_ts=1776446542.211569&amp;cid=C04N9RP7LUF\" rel=\"noopener noreferrer\">thread</a> from <b>#yoobic_stream</b>. This message was sent via Thena</blockquote></div>",
+      "plain_body": "Ruggero Bonora: thanks @Guilherme Cortes (Stream)\nif we disable this, are there other notifications that may be missed and useful?\n\n---\n\n  Slack thread from #yoobic_stream. This message was sent via Thena",
+      "public": true,
+      "attachments": [],
+      "audit_id": 39834685510679,
+      "via": {
+        "channel": "api",
+        "source": {
+          "from": {},
+          "to": {},
+          "rel": null
+        }
+      },
+      "created_at": "2026-04-17T20:20:17Z",
+      "metadata": {
+        "system": {
+          "client": "axios/0.27.2",
+          "ip_address": "44.213.174.166",
+          "location": "Ashburn, VA, United States",
+          "latitude": 39.0469,
+          "longitude": -77.4903
+        },
+        "custom": {}
+      }
+    }
+  ],
+  "users": [
+    {
+      "id": 1515461428242,
+      "url": "https://getstream.zendesk.com/api/v2/users/1515461428242.json",
+      "name": "Guilherme Cortes",
+      "email": "guilherme.cortes@getstream.io",
+      "created_at": "2021-08-05T11:55:56Z",
+      "updated_at": "2026-04-19T00:28:36Z",
+      "time_zone": "UTC",
+      "iana_time_zone": "Etc/UTC",
+      "phone": null,
+      "shared_phone_number": null,
+      "photo": {
+        "url": "https://getstream.zendesk.com/api/v2/attachments/1500735250641.json",
+        "id": 1500735250641,
+        "file_name": "avatar-1628164966.jpg",
+        "content_url": "https://getstream.zendesk.com/system/photos/1500735250641/avatar-1628164966.jpg",
+        "mapped_content_url": "https://support.getstream.io/system/photos/1500735250641/avatar-1628164966.jpg",
+        "content_type": "image/png",
+        "size": 2219,
+        "width": 80,
+        "height": 80,
+        "inline": false,
+        "deleted": false,
+        "thumbnails": [
+          {
+            "url": "https://getstream.zendesk.com/api/v2/attachments/1500735250701.json",
+            "id": 1500735250701,
+            "file_name": "avatar-1628164966_thumb.jpg",
+            "content_url": "https://getstream.zendesk.com/system/photos/1500735250641/avatar-1628164966_thumb.jpg",
+            "mapped_content_url": "https://support.getstream.io/system/photos/1500735250641/avatar-1628164966_thumb.jpg",
+            "content_type": "image/png",
+            "size": 988,
+            "width": 32,
+            "height": 32,
+            "inline": false,
+            "deleted": false
+          }
+        ]
+      },
+      "locale_id": 1,
+      "locale": "en-US",
+      "organization_id": 1900007459845,
+      "role": "admin",
+      "verified": true,
+      "external_id": null,
+      "tags": [],
+      "alias": "",
+      "active": true,
+      "shared": false,
+      "shared_agent": false,
+      "last_login_at": "2026-04-19T00:22:00Z",
+      "two_factor_auth_enabled": false,
+      "signature": "",
+      "details": "",
+      "notes": "",
+      "role_type": 4,
+      "custom_role_id": 1900000838285,
+      "is_billing_admin": false,
+      "moderator": true,
+      "ticket_restriction": null,
+      "only_private_comments": false,
+      "restricted_agent": false,
+      "suspended": false,
+      "default_group_id": 360013505174,
+      "report_csv": false,
+      "user_fields": {}
+    },
+    {
+      "id": 14470100771351,
+      "url": "https://getstream.zendesk.com/api/v2/users/14470100771351.json",
+      "name": "rbonora",
+      "email": "rbonora@yoobic.com",
+      "created_at": "2023-05-09T16:01:09Z",
+      "updated_at": "2024-10-22T16:03:37Z",
+      "time_zone": "Central Time (US & Canada)",
+      "iana_time_zone": "America/Chicago",
+      "phone": null,
+      "shared_phone_number": null,
+      "photo": null,
+      "locale_id": 1,
+      "locale": "en-US",
+      "organization_id": 17284174902551,
+      "role": "end-user",
+      "verified": true,
+      "external_id": null,
+      "tags": [],
+      "alias": "",
+      "active": true,
+      "shared": false,
+      "shared_agent": false,
+      "last_login_at": "2024-10-22T16:03:37Z",
+      "two_factor_auth_enabled": null,
+      "signature": null,
+      "details": "",
+      "notes": "",
+      "role_type": null,
+      "custom_role_id": null,
+      "is_billing_admin": null,
+      "moderator": false,
+      "ticket_restriction": "organization",
+      "only_private_comments": false,
+      "restricted_agent": true,
+      "suspended": false,
+      "default_group_id": null,
+      "report_csv": false,
+      "user_fields": {}
+    }
+  ]
+}

@@ -7,6 +7,7 @@ import { classifyTicket } from '../../utils/classifyTicket';
 import { makeCssVars, ACCENT_PRESETS } from '../../theme';
 import { useTickets } from '../../hooks/useTickets';
 import { useUpdateTicket } from '../../hooks/useUpdateTicket';
+import { useAssignTicket } from '../../hooks/useAssignTicket';
 import { useNow } from '../../hooks/useNow';
 import { TopBar } from '../TopBar';
 import { Column } from './Column';
@@ -56,6 +57,7 @@ const ASSIGNEE_CYCLE = ['MK', 'JR', 'SL', 'AB'] as const;
 export default function Board() {
   const { data: serverTickets = [] } = useTickets();
   const mutation = useUpdateTicket();
+  const assignMutation = useAssignTicket();
   const queryClient = useQueryClient();
   const nowMs = useNow();
 
@@ -220,6 +222,7 @@ export default function Board() {
               staleHours={tweaks.staleHours}
               onOpen={setSelected}
               onDrop={onDrop}
+              onAssign={(id) => assignMutation.mutate(id)}
               cardVariant={tweaks.cardVariant}
               density={tweaks.density}
             />

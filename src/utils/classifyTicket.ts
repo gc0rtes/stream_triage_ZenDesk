@@ -1,6 +1,7 @@
 import type { Ticket, ColumnKey } from '../types/ticket';
 
 export function classifyTicket(t: Ticket, nowMs: number, staleHours: number): ColumnKey | null {
+  if (!t.assignee) return 'unassigned';
   const ageHours = (nowMs - t.updatedAt) / 3600_000;
   if (t.status === 'solved') {
     return ageHours <= 24 * 7 ? 'solved' : null;
