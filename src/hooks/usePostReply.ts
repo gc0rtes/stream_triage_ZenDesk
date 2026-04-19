@@ -6,26 +6,28 @@ export function usePostReply(ticketId: number | null) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (vars: { body: string; isPublic: boolean; status?: string; uploads?: string[] }) =>
+    mutationFn: (vars: { body?: string; isPublic?: boolean; status?: string; uploads?: string[]; assigneeId?: number | null; customFields?: Array<{ id: number; value: string | string[] | boolean | null }> }) =>
       submitReply(ticketId!, vars),
     onMutate: async ({ body, isPublic }) => {
       await queryClient.cancelQueries({ queryKey: ['ticket', ticketId] })
       const prev = queryClient.getQueryData<FullTicket>(['ticket', ticketId])
-      queryClient.setQueryData<FullTicket>(['ticket', ticketId], old => {
-        if (!old) return old
-        return {
-          ...old,
-          comments: [...old.comments, {
-            id: Date.now(),
-            author_id: MY_ASSIGNEE_ID,
-            author_name: 'Guilherme Cortes',
-            body,
-            public: isPublic,
-            created_at: new Date().toISOString(),
-            attachments: [],
-          }],
-        }
-      })
+      if (body?.trim()) {
+        queryClient.setQueryData<FullTicket>(['ticket', ticketId], old => {
+          if (!old) return old
+          return {
+            ...old,
+            comments: [...old.comments, {
+              id: Date.now(),
+              author_id: MY_ASSIGNEE_ID,
+              author_name: 'Guilherme Cortes',
+              body,
+              public: isPublic ?? true,
+              created_at: new Date().toISOString(),
+              attachments: [],
+            }],
+          }
+        })
+      }
       return { prev }
     },
     onError: (_err, _vars, ctx) => {

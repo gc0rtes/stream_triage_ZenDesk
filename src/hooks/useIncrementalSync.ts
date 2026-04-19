@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import type { Ticket } from '../types/ticket'
 import { fetchIncrementalTickets } from '../api/tickets'
+import { pendingMutationIds } from './pendingMutations'
 
 const POLL_MS = 30_000
 
@@ -22,6 +23,9 @@ export function useIncrementalSync() {
           if (!prev) return prev
           const map = new Map(prev.map(t => [t.id, t]))
           for (const t of changed) {
+            // Skip tickets with in-flight mutations — don't overwrite optimistic state
+            if (pendingMutationIds.has(t.id)) continue
+
             const isMyTicket = t.assignee === 'GC'
             const isUnassignedNew = t.assignee === '' && t.status === 'open'
             const wasInBoard = map.has(t.id)

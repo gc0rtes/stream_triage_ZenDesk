@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
 import type { ChangeEvent } from 'react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { Ticket } from '../types/ticket'
 import type { ZDMacro, FullTicket, ZDTicketField, CustomFieldValue } from '../api/tickets'
 import type { ZDAttachment } from '../types/comment'
@@ -12,7 +11,8 @@ import { useFullTicket } from '../hooks/useFullTicket'
 import { usePostReply } from '../hooks/usePostReply'
 import { useMacros } from '../hooks/useMacros'
 import { useFormFields } from '../hooks/useFormFields'
-import { MY_ASSIGNEE_ID, uploadAttachment, updateCustomFields, updateTicketStatus } from '../api/tickets'
+import { useAgents } from '../hooks/useAgents'
+import { MY_ASSIGNEE_ID, uploadAttachment } from '../api/tickets'
 import { useToast } from './Toast'
 
 // Form 5.0 ID — the default ticket form for getstream ZD
@@ -199,28 +199,26 @@ function FieldRow({ field, value, onSave, saving }: FieldRowProps) {
 interface TicketPropertiesPanelProps {
   ticket: Ticket
   full: FullTicket | undefined
+  pendingAssigneeId: number | null | undefined
+  onAssigneeChange: (id: number | null) => void
+  pendingFields: Record<number, CustomFieldValue['value']>
+  onFieldChange: (fieldId: number, value: CustomFieldValue['value']) => void
+  submitting: boolean
 }
 
-function TicketPropertiesPanel({ ticket, full }: TicketPropertiesPanelProps) {
-  const queryClient = useQueryClient()
+function TicketPropertiesPanel({ ticket, full, pendingAssigneeId, onAssigneeChange, pendingFields, onFieldChange, submitting }: TicketPropertiesPanelProps) {
   const formId = (full?.ticket_form_id) ?? FORM_5_ID
   const { data: formData } = useFormFields(formId)
-
-  const mutation = useMutation({
-    mutationFn: (vars: { fieldId: number; value: CustomFieldValue['value'] }) =>
-      updateCustomFields(ticket.id, [{ id: vars.fieldId, value: vars.value }]),
-    onSettled: () => {
-      void queryClient.invalidateQueries({ queryKey: ['ticket', ticket.id] })
-      void queryClient.invalidateQueries({ queryKey: ['tickets'] })
-    },
-  })
+  const { data: agents = [] } = useAgents()
 
   const getVal = (fieldId: number): CustomFieldValue['value'] =>
     full?.custom_fields.find(cf => cf.id === fieldId)?.value ?? null
 
-  const a = ASSIGNEES[ticket.assignee]
+  const savedAgentId = full?.assignee_id ?? null
+  // Show pending value if changed, otherwise the saved value
+  const displayAgentId = pendingAssigneeId !== undefined ? pendingAssigneeId : savedAgentId
+  const assigneeChanged = pendingAssigneeId !== undefined && pendingAssigneeId !== savedAgentId
 
-  // Only custom (non-builtin) fields in form order
   const customFields = formData
     ? formData.fieldIds
         .map(id => formData.fields.find(f => f.id === id))
@@ -245,11 +243,27 @@ function TicketPropertiesPanel({ ticket, full }: TicketPropertiesPanelProps) {
             <div style={{ fontSize: 12, color: 'var(--text)', padding: '4px 0' }}>{ticket.customer}</div>
           </div>
           <div>
-            <div style={{ fontSize: 11, color: 'var(--text-dim)', fontWeight: 600, marginBottom: 3 }}>Assignee</div>
-            <div style={{ fontSize: 12, color: 'var(--text)', padding: '4px 0', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <AssigneeChip id={ticket.assignee} size={16} />
-              {(a?.name ?? ticket.assignee) || 'Unassigned'}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 3 }}>
+              <span style={{ fontSize: 11, color: 'var(--text-dim)', fontWeight: 600 }}>Assignee</span>
+              {assigneeChanged && <span style={{ fontSize: 9, color: 'var(--warn)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.4 }}>unsaved</span>}
             </div>
+            <select
+              value={displayAgentId ?? ''}
+              disabled={agents.length === 0 || submitting}
+              onChange={e => {
+                const val = e.target.value
+                onAssigneeChange(val ? Number(val) : null)
+              }}
+              style={{
+                ...fieldInputStyle, cursor: 'pointer',
+                borderColor: assigneeChanged ? 'var(--warn)' : undefined,
+              }}
+            >
+              <option value="">— Unassigned —</option>
+              {agents.map(agent => (
+                <option key={agent.id} value={agent.id}>{agent.name}</option>
+              ))}
+            </select>
           </div>
           <div>
             <div style={{ fontSize: 11, color: 'var(--text-dim)', fontWeight: 600, marginBottom: 3 }}>Status</div>
@@ -289,19 +303,23 @@ function TicketPropertiesPanel({ ticket, full }: TicketPropertiesPanelProps) {
             Loading fields…
           </div>
         )}
-        {customFields.map(field => (
-          <div key={field.id}>
-            <div style={{ fontSize: 11, color: 'var(--text-dim)', fontWeight: 600, marginBottom: 4 }}>
-              {field.title}
+        {customFields.map(field => {
+          const isPending = field.id in pendingFields
+          return (
+            <div key={field.id}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4 }}>
+                <span style={{ fontSize: 11, color: 'var(--text-dim)', fontWeight: 600 }}>{field.title}</span>
+                {isPending && <span style={{ fontSize: 9, color: 'var(--warn)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.4 }}>unsaved</span>}
+              </div>
+              <FieldRow
+                field={field}
+                value={isPending ? pendingFields[field.id] : getVal(field.id)}
+                saving={submitting}
+                onSave={val => onFieldChange(field.id, val)}
+              />
             </div>
-            <FieldRow
-              field={field}
-              value={getVal(field.id)}
-              saving={mutation.isPending}
-              onSave={val => mutation.mutate({ fieldId: field.id, value: val })}
-            />
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )
@@ -317,10 +335,12 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
   const [expanded, setExpanded] = useState(
     () => localStorage.getItem('zd-panel-expanded') === 'true'
   )
+  // Pending property changes — flushed to ZD only on submit
+  const [pendingAssigneeId, setPendingAssigneeId] = useState<number | null | undefined>(undefined)
+  const [pendingFields, setPendingFields] = useState<Record<number, CustomFieldValue['value']>>({})
   const threadRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const queryClient = useQueryClient()
   const { showToast } = useToast()
   const { data: full, isLoading } = useFullTicket(ticket?.id ?? null)
   const comments = full?.comments ?? []
@@ -328,13 +348,11 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
   const { data: macrosData } = useMacros()
   const macros = macrosData ?? []
 
-  const statusMutation = useMutation({
-    mutationFn: (status: string) => updateTicketStatus(ticket!.id, { status: status as 'open' | 'pending' | 'hold' | 'solved' }),
-    onSettled: () => {
-      void queryClient.invalidateQueries({ queryKey: ['tickets'] })
-      void queryClient.invalidateQueries({ queryKey: ['ticket', ticket?.id] })
-    },
-  })
+  // Reset pending state when a different ticket is opened
+  useEffect(() => {
+    setPendingAssigneeId(undefined)
+    setPendingFields({})
+  }, [ticket?.id])
 
   useEffect(() => {
     if (threadRef.current) {
@@ -377,22 +395,25 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
   const handleSend = () => handleSubmitAs(submitAs)
 
   const handleSubmitAs = (status: string) => {
-    if (!ticket || reply.isPending || statusMutation.isPending) return
+    if (!ticket || reply.isPending) return
     setSubmitAs(status)
     setShowStatusMenu(false)
+
     const trimmed = body.trim()
     const uploads = attachments.filter(a => a.token).map(a => a.token!)
-    if (trimmed) {
-      reply.mutate({ body: trimmed, isPublic, status, uploads }, {
-        onSuccess: () => { showToast(ticket.id, status); onClose() },
-      })
-      setBody('')
-      setAttachments([])
-    } else {
-      statusMutation.mutate(status, {
-        onSuccess: () => { showToast(ticket.id, status); onClose() },
-      })
-    }
+    const customFields = Object.entries(pendingFields).map(([id, value]) => ({ id: Number(id), value }))
+    const assigneeId = pendingAssigneeId
+
+    const onSuccess = () => { showToast(ticket.id, status); onClose() }
+
+    reply.mutate(
+      { body: trimmed || undefined, isPublic, status, uploads: uploads.length ? uploads : undefined, assigneeId, customFields: customFields.length ? customFields : undefined },
+      { onSuccess },
+    )
+    setBody('')
+    setAttachments([])
+    setPendingAssigneeId(undefined)
+    setPendingFields({})
   }
 
   if (!ticket) return null
@@ -587,7 +608,7 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
             <div style={{ position: 'relative', display: 'inline-flex' }}>
               <button
                 onClick={handleSend}
-                disabled={reply.isPending || statusMutation.isPending}
+                disabled={reply.isPending || reply.isPending}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6,
                   padding: '8px 14px', borderRadius: '5px 0 0 5px', cursor: 'pointer',
@@ -595,7 +616,7 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
                   color: 'var(--accent-ink)',
                   border: 'none', borderRight: '1px solid rgba(0,0,0,0.15)',
                   fontWeight: 600, fontSize: 12, letterSpacing: 0.4,
-                  textTransform: 'uppercase', opacity: (reply.isPending || statusMutation.isPending) ? 0.6 : 1,
+                  textTransform: 'uppercase', opacity: (reply.isPending || reply.isPending) ? 0.6 : 1,
                 }}
               >
                 <IconReply size={13} />
@@ -609,7 +630,7 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
                   background: 'var(--accent)',
                   color: 'var(--accent-ink)',
                   border: 'none', fontWeight: 600, fontSize: 11,
-                  opacity: (reply.isPending || statusMutation.isPending) ? 0.6 : 1,
+                  opacity: (reply.isPending || reply.isPending) ? 0.6 : 1,
                 }}
               >▼</button>
               {showStatusMenu && (
@@ -648,7 +669,14 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
           boxShadow: '0 24px 80px rgba(0,0,0,0.55)',
           border: '1px solid var(--border)',
         }}>
-          <TicketPropertiesPanel ticket={ticket} full={full} />
+          <TicketPropertiesPanel
+            ticket={ticket} full={full}
+            pendingAssigneeId={pendingAssigneeId}
+            onAssigneeChange={setPendingAssigneeId}
+            pendingFields={pendingFields}
+            onFieldChange={(id, val) => setPendingFields(prev => ({ ...prev, [id]: val }))}
+            submitting={reply.isPending}
+          />
           {conversationCol}
         </div>
       </div>

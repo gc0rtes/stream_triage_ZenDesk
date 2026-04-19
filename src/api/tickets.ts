@@ -27,10 +27,13 @@ interface RawZDTicket {
   organization_id: number | null
 }
 
+const PRO_PLAN_KEYWORDS = ['_startup', '_standard', '_premium', '_scale', '_growth', '_mau', '_pro', '_paid', '_maker']
+
 function deriveTier(tags: string[]): Ticket['tier'] {
   if (tags.some(t => t.includes('enterprise') && !t.includes('non_enterprise'))) return 'enterprise'
   if (tags.some(t => t === 'free' || t.includes('_free'))) return 'free'
-  return 'pro'
+  if (tags.some(t => PRO_PLAN_KEYWORDS.some(kw => t.includes(kw)))) return 'pro'
+  return 'free' // no recognisable plan tag → don't assume paid
 }
 
 function deriveHoldType(tags: string[], status: Ticket['status']): Ticket['holdType'] {
@@ -127,11 +130,12 @@ export interface FullTicket extends Ticket {
   comments: ZDComment[]
   custom_fields: CustomFieldValue[]
   ticket_form_id: number | null
+  assignee_id: number | null
 }
 
 export async function fetchFullTicket(id: number): Promise<FullTicket> {
   const [{ ticket }, { comments }] = await Promise.all([
-    zdFetch<{ ticket: Ticket & { custom_fields?: CustomFieldValue[]; ticket_form_id?: number | null } }>(`/tickets/${id}.json`),
+    zdFetch<{ ticket: Ticket & { custom_fields?: CustomFieldValue[]; ticket_form_id?: number | null; assignee_id?: number | null } }>(`/tickets/${id}.json`),
     zdFetch<{ comments: Array<Omit<ZDComment, 'author_name' | 'attachments'> & { attachments?: ZDComment['attachments'] }> }>(`/tickets/${id}/comments.json`),
   ])
 
@@ -152,6 +156,7 @@ export async function fetchFullTicket(id: number): Promise<FullTicket> {
     comments: enrichedComments,
     custom_fields: ticket.custom_fields ?? [],
     ticket_form_id: ticket.ticket_form_id ?? null,
+    assignee_id: ticket.assignee_id ?? null,
   }
 }
 
@@ -182,20 +187,29 @@ export async function updateCustomFields(
 
 export async function submitReply(
   id: number,
-  opts: { body: string; isPublic: boolean; status?: string; uploads?: string[] }
+  opts: {
+    body?: string
+    isPublic?: boolean
+    status?: string
+    uploads?: string[]
+    assigneeId?: number | null
+    customFields?: CustomFieldValue[]
+  }
 ): Promise<void> {
+  const ticket: Record<string, unknown> = {}
+  if (opts.status) ticket.status = opts.status
+  if (opts.assigneeId !== undefined) ticket.assignee_id = opts.assigneeId
+  if (opts.customFields?.length) ticket.custom_fields = opts.customFields
+  if (opts.body?.trim()) {
+    ticket.comment = {
+      body: opts.body,
+      public: opts.isPublic ?? true,
+      ...(opts.uploads?.length ? { uploads: opts.uploads } : {}),
+    }
+  }
   await zdFetch<unknown>(`/tickets/${id}.json`, {
     method: 'PUT',
-    body: JSON.stringify({
-      ticket: {
-        ...(opts.status ? { status: opts.status } : {}),
-        comment: {
-          body: opts.body,
-          public: opts.isPublic,
-          ...(opts.uploads?.length ? { uploads: opts.uploads } : {}),
-        },
-      },
-    }),
+    body: JSON.stringify({ ticket }),
   })
 }
 
@@ -210,6 +224,32 @@ export async function uploadAttachment(file: File): Promise<string> {
     }
   )
   return data.upload.token
+}
+
+export interface ZDAgent {
+  id: number
+  name: string
+  email: string
+}
+
+export async function fetchAgents(): Promise<ZDAgent[]> {
+  const [agentsRes, adminsRes] = await Promise.all([
+    zdFetch<{ users: ZDAgent[] }>('/users.json?role=agent&per_page=100'),
+    zdFetch<{ users: ZDAgent[] }>('/users.json?role=admin&per_page=100'),
+  ])
+  const seen = new Set<number>()
+  return [...agentsRes.users, ...adminsRes.users].filter(u => {
+    if (seen.has(u.id)) return false
+    seen.add(u.id)
+    return true
+  })
+}
+
+export async function reassignTicket(ticketId: number, agentId: number): Promise<void> {
+  await zdFetch<unknown>(`/tickets/${ticketId}.json`, {
+    method: 'PUT',
+    body: JSON.stringify({ ticket: { assignee_id: agentId } }),
+  })
 }
 
 export interface ZDMacro {
