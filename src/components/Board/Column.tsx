@@ -1,12 +1,19 @@
 import { useState } from 'react';
 import type { Ticket } from '../../types/ticket';
 import type { ColumnKey } from '../../types/ticket';
+import type { SortMode } from './Board';
 import { DENSITY_PRESETS } from '../../theme';
 import {
   IconFlame, IconDot, IconLinear, IconSparkle,
-  IconHourglass, IconCheck, IconAlert, IconPlus, IconChevronLeft,
+  IconHourglass, IconCheck, IconAlert, IconPlus, IconChevronLeft, IconSort,
 } from '../icons';
 import { TicketCard } from './TicketCard';
+
+const SORT_OPTIONS: Array<{ value: SortMode; label: string; hint: string }> = [
+  { value: 'newest', label: 'Newest first', hint: 'Most recently updated' },
+  { value: 'oldest', label: 'Oldest first', hint: 'Longest without update' },
+  { value: 'tier',   label: 'By tier',      hint: 'Enterprise → Pro → Free' },
+];
 
 const PRESSURE_SOFT_CAP = 6;
 const PRESSURE_HARD_CAP = 12;
@@ -26,11 +33,14 @@ interface ColumnProps {
   highlighted?: boolean;
   collapsed?: boolean;
   onToggleCollapse: () => void;
+  sort: SortMode;
+  onSortChange: (s: SortMode) => void;
 }
 
 export function Column({
   col, tickets, nowMs, staleHours, onOpen, onDrop, onAssign,
   cardVariant, density, highlighted = false, collapsed = false, onToggleCollapse,
+  sort, onSortChange,
 }: ColumnProps) {
   const count = tickets.length;
   const pressure = Math.max(0, Math.min(1,
@@ -43,6 +53,7 @@ export function Column({
   }).length;
 
   const [over, setOver] = useState(false);
+  const [showSortMenu, setShowSortMenu] = useState(false);
 
   const onDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -146,6 +157,51 @@ export function Column({
               <IconAlert size={10} /> {urgentCount}
             </span>
           )}
+          {/* Sort button */}
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={e => { e.stopPropagation(); setShowSortMenu(v => !v) }}
+              title={`Sort: ${SORT_OPTIONS.find(o => o.value === sort)?.label}`}
+              style={{
+                background: showSortMenu ? 'var(--accent-soft)' : 'transparent',
+                border: 'none', cursor: 'pointer',
+                color: sort !== 'newest' && sort !== 'oldest' ? 'var(--accent)' : 'var(--text-mute)',
+                display: 'inline-flex', padding: 2,
+                borderRadius: 3, lineHeight: 1,
+              }}
+            >
+              <IconSort size={13} />
+            </button>
+            {showSortMenu && (
+              <>
+                <div onClick={() => setShowSortMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 40 }} />
+                <div style={{
+                  position: 'absolute', top: '100%', right: 0, zIndex: 50,
+                  background: 'var(--surface)', border: '1px solid var(--border)',
+                  borderRadius: 6, boxShadow: '0 6px 20px rgba(0,0,0,0.35)',
+                  marginTop: 4, minWidth: 200, overflow: 'hidden',
+                }}>
+                  {SORT_OPTIONS.map(opt => (
+                    <button
+                      key={opt.value}
+                      onClick={() => { onSortChange(opt.value); setShowSortMenu(false) }}
+                      style={{
+                        display: 'block', width: '100%', textAlign: 'left',
+                        padding: '8px 12px', background: sort === opt.value ? 'var(--accent-soft)' : 'transparent',
+                        border: 'none', cursor: 'pointer',
+                        borderLeft: sort === opt.value ? '2px solid var(--accent)' : '2px solid transparent',
+                      }}
+                      onMouseEnter={e => { if (sort !== opt.value) (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-2)' }}
+                      onMouseLeave={e => { if (sort !== opt.value) (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
+                    >
+                      <div style={{ fontSize: 12, fontWeight: 600, color: sort === opt.value ? 'var(--accent)' : 'var(--text)' }}>{opt.label}</div>
+                      <div style={{ fontSize: 10, color: 'var(--text-mute)', marginTop: 1 }}>{opt.hint}</div>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
           <button
             onClick={e => { e.stopPropagation(); onToggleCollapse() }}
             title="Collapse column"

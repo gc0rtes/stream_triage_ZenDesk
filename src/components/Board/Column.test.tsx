@@ -21,6 +21,8 @@ function makeTicket(id: number, subject: string): Ticket {
     customer: 'Acme',
     requesterName: null,
     requesterEmail: null,
+    lastRequesterReplyAt: null,
+    lastAgentReplyAt: null,
   };
 }
 
@@ -35,6 +37,8 @@ const baseProps = {
   onToggleCollapse: vi.fn(),
   cardVariant: 'default',
   density: 'comfortable',
+  sort: 'newest' as const,
+  onSortChange: vi.fn(),
 };
 
 describe('Column', () => {

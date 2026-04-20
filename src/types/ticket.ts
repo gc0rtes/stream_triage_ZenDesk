@@ -14,6 +14,8 @@ export interface ZDTicket {
   customer: string;
   requesterName: string | null;
   requesterEmail: string | null;
+  lastRequesterReplyAt: number | null;
+  lastAgentReplyAt: number | null;
 }
 
 export type Ticket = ZDTicket;

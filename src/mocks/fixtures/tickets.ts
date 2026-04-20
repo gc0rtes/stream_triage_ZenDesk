@@ -26,7 +26,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-02551",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79969,
@@ -49,7 +51,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-68919",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79845,
@@ -79,7 +83,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Unknown",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79847,
@@ -105,7 +111,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-19063",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79812,
@@ -134,7 +142,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Unknown",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79810,
@@ -163,7 +173,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Unknown",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79768,
@@ -188,7 +200,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-75223",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79765,
@@ -218,7 +232,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Unknown",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79763,
@@ -246,7 +262,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Unknown",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79761,
@@ -275,7 +293,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-03447",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79728,
@@ -304,7 +324,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Unknown",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79707,
@@ -333,7 +355,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Unknown",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79703,
@@ -363,7 +387,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Unknown",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79700,
@@ -391,7 +417,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Unknown",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79667,
@@ -421,7 +449,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Unknown",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79663,
@@ -447,7 +477,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Unknown",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79509,
@@ -476,7 +508,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-40535",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79976,
@@ -501,7 +535,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-52439",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79887,
@@ -524,7 +560,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Unknown",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79884,
@@ -549,7 +587,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-94423",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79725,
@@ -573,7 +613,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-38327",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79706,
@@ -601,7 +643,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Unknown",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79673,
@@ -626,7 +670,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-05783",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79602,
@@ -654,7 +700,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Unknown",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79975,
@@ -678,7 +726,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-39031",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79974,
@@ -702,7 +752,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Unknown",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79952,
@@ -731,7 +783,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Unknown",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79922,
@@ -754,7 +808,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-03863",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79921,
@@ -778,7 +834,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-48983",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79917,
@@ -803,7 +861,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-00279",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79916,
@@ -827,7 +887,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-48983",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79888,
@@ -853,7 +915,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-47282",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79886,
@@ -878,7 +942,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-87021",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79885,
@@ -902,7 +968,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-00279",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79849,
@@ -925,7 +993,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-03607",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79846,
@@ -952,7 +1022,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Unknown",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79815,
@@ -976,7 +1048,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Unknown",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79813,
@@ -1001,7 +1075,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Unknown",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79809,
@@ -1028,7 +1104,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Unknown",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79808,
@@ -1051,7 +1129,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-86551",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79807,
@@ -1076,7 +1156,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-77143",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79805,
@@ -1101,7 +1183,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-48983",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79769,
@@ -1125,7 +1209,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-21559",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79764,
@@ -1149,7 +1235,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-48983",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79729,
@@ -1173,7 +1261,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-68919",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79727,
@@ -1197,7 +1287,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-48983",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79726,
@@ -1222,7 +1314,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-98327",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79719,
@@ -1247,7 +1341,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-51863",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79715,
@@ -1271,7 +1367,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-11521",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79712,
@@ -1295,7 +1393,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-59845",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79711,
@@ -1319,7 +1419,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Unknown",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79710,
@@ -1344,7 +1446,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-05783",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79709,
@@ -1369,7 +1473,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-05783",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79699,
@@ -1396,7 +1502,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-03447",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79675,
@@ -1420,7 +1528,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-59845",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79672,
@@ -1443,7 +1553,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-96535",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79671,
@@ -1466,7 +1578,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Unknown",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79669,
@@ -1491,7 +1605,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-05783",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79668,
@@ -1514,7 +1630,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Unknown",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79665,
@@ -1539,7 +1657,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Unknown",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79664,
@@ -1562,7 +1682,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Unknown",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79662,
@@ -1587,7 +1709,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Unknown",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79660,
@@ -1610,7 +1734,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Unknown",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79656,
@@ -1639,7 +1765,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-03447",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79655,
@@ -1667,7 +1795,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Unknown",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79627,
@@ -1697,7 +1827,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Unknown",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79620,
@@ -1722,7 +1854,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-56845",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79618,
@@ -1746,7 +1880,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-11521",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79530,
@@ -1771,7 +1907,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-56865",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79519,
@@ -1795,7 +1933,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-77527",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79513,
@@ -1826,7 +1966,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Unknown",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79511,
@@ -1856,7 +1998,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Unknown",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79486,
@@ -1880,7 +2024,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Unknown",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79481,
@@ -1905,7 +2051,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-38327",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79477,
@@ -1931,7 +2079,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Unknown",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79985,
@@ -1959,7 +2109,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-03447",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79984,
@@ -1989,7 +2141,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-82167",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79983,
@@ -2017,7 +2171,9 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-72855",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   },
   {
     "id": 79981,
@@ -2039,6 +2195,8 @@ export const SEED_TICKETS: Ticket[] = [
     "linear": null,
     "customer": "Org-96535",
     "requesterName": null,
-    "requesterEmail": null
+    "requesterEmail": null,
+    "lastRequesterReplyAt": null,
+    "lastAgentReplyAt": null
   }
 ]

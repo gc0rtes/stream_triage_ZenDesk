@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import type { ChangeEvent } from 'react'
 import type { Ticket } from '../types/ticket'
 import type { ZDMacro, FullTicket, ZDTicketField, CustomFieldValue } from '../api/tickets'
@@ -13,6 +13,7 @@ import { useMacros } from '../hooks/useMacros'
 import { useFormFields } from '../hooks/useFormFields'
 import { useAgents } from '../hooks/useAgents'
 import { MY_ASSIGNEE_ID, uploadAttachment } from '../api/tickets'
+import { useQueryClient } from '@tanstack/react-query'
 import { useToast } from './Toast'
 import { RequesterPanel } from './RequesterPanel'
 
@@ -344,6 +345,7 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const { showToast } = useToast()
+  const queryClient = useQueryClient()
   const { data: full, isLoading } = useFullTicket(ticket?.id ?? null)
   const comments = full?.comments ?? []
   const reply = usePostReply(ticket?.id ?? null)
@@ -356,6 +358,27 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
     setPendingFields({})
     setActiveTab('thread')
   }, [ticket?.id])
+
+  // Enrich ticket in cache with comment timestamps for sort support
+  const enrichFromComments = useCallback(() => {
+    if (!full?.comments || !ticket) return
+    let lastRequesterReplyAt: number | null = null
+    let lastAgentReplyAt: number | null = null
+    for (const c of full.comments) {
+      if (!c.public) continue
+      const ts = new Date(c.created_at).getTime()
+      if (c.author_id !== MY_ASSIGNEE_ID) {
+        if (!lastRequesterReplyAt || ts > lastRequesterReplyAt) lastRequesterReplyAt = ts
+      } else {
+        if (!lastAgentReplyAt || ts > lastAgentReplyAt) lastAgentReplyAt = ts
+      }
+    }
+    queryClient.setQueryData<import('../types/ticket').Ticket[]>(['tickets'], ts =>
+      ts?.map(t => t.id !== ticket.id ? t : { ...t, lastRequesterReplyAt, lastAgentReplyAt }) ?? []
+    )
+  }, [full?.comments, ticket, queryClient])
+
+  useEffect(() => { enrichFromComments() }, [enrichFromComments])
 
   useEffect(() => {
     if (threadRef.current) {

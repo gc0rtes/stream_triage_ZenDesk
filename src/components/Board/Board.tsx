@@ -1,7 +1,34 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
+export type SortMode = 'newest' | 'oldest' | 'tier' | 'requester' | 'agent';
 import type { CSSProperties } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Ticket, ColumnKey } from '../../types/ticket';
+
+const TIER_ORDER: Record<string, number> = { enterprise: 0, pro: 1, free: 2 };
+
+function sortTickets(tickets: Ticket[], mode: SortMode): Ticket[] {
+  const s = [...tickets];
+  if (mode === 'tier')
+    return s.sort((a, b) => (TIER_ORDER[a.tier] - TIER_ORDER[b.tier]) || (a.updatedAt - b.updatedAt));
+  if (mode === 'oldest')
+    return s.sort((a, b) => a.updatedAt - b.updatedAt);
+  if (mode === 'requester')
+    return s.sort((a, b) => (b.lastRequesterReplyAt ?? 0) - (a.lastRequesterReplyAt ?? 0));
+  if (mode === 'agent')
+    return s.sort((a, b) => (a.lastAgentReplyAt ?? Number.MAX_SAFE_INTEGER) - (b.lastAgentReplyAt ?? Number.MAX_SAFE_INTEGER));
+  // newest (default)
+  return s.sort((a, b) => b.updatedAt - a.updatedAt);
+}
+
+const DEFAULT_COL_SORT: Record<ColumnKey, SortMode> = {
+  unassigned: 'newest',
+  priority:   'tier',
+  standard:   'newest',
+  hold_dev:   'tier',
+  hold_fr:    'tier',
+  pending:    'oldest',
+  solved:     'newest',
+};
 import { COLUMNS } from '../../data/columns';
 import { classifyTicket } from '../../utils/classifyTicket';
 import { makeCssVars, ACCENT_PRESETS } from '../../theme';
@@ -78,6 +105,7 @@ export default function Board() {
   const [query, setQuery] = useState('');
   const [tierFilter, setTierFilter] = useState<Set<string>>(new Set());
   const [assigneeFilter, setAssigneeFilter] = useState<Set<string>>(new Set());
+  const [columnSorts, setColumnSorts] = useState<Record<ColumnKey, SortMode>>(DEFAULT_COL_SORT);
   const [tweaks, setTweaks] = useState<Tweaks>({
     accent: 'green',
     density: 'comfortable',
@@ -143,14 +171,10 @@ export default function Board() {
       if (k && cols[k]) cols[k].push(t);
     });
     Object.keys(cols).forEach(k => {
-      if (k === 'priority') {
-        cols[k].sort((a, b) => a.updatedAt - b.updatedAt);
-      } else {
-        cols[k].sort((a, b) => b.updatedAt - a.updatedAt);
-      }
+      cols[k] = sortTickets(cols[k], columnSorts[k as ColumnKey] ?? 'newest');
     });
     return cols;
-  }, [visible, nowMs, tweaks.staleHours]);
+  }, [visible, nowMs, tweaks.staleHours, columnSorts]);
 
   const onDrop = useCallback((id: number, colKey: ColumnKey) => {
     const isBurst = burstTickets.some(t => t.id === id);
@@ -180,6 +204,8 @@ export default function Board() {
       holdType: null,
       requesterName: null,
       requesterEmail: null,
+    lastRequesterReplyAt: null,
+    lastAgentReplyAt: null,
     }));
     setBurstTickets(ts => [...newTickets, ...ts]);
   }, []);
@@ -303,6 +329,8 @@ export default function Board() {
                 density={tweaks.density}
                 collapsed={isCollapsed}
                 onToggleCollapse={() => toggleCollapsed(col.key)}
+                sort={columnSorts[col.key]}
+                onSortChange={(s) => setColumnSorts(prev => ({ ...prev, [col.key]: s }))}
               />
             </div>
           );

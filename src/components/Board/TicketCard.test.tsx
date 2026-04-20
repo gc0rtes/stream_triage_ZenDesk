@@ -19,6 +19,8 @@ const mockTicket: Ticket = {
   customer: 'Acme Corp',
     requesterName: null,
     requesterEmail: null,
+    lastRequesterReplyAt: null,
+    lastAgentReplyAt: null,
 };
 
 describe('TicketCard', () => {

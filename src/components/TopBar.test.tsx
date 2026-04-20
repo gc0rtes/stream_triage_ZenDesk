@@ -21,6 +21,8 @@ function makeTicket(id: number): Ticket {
     customer: 'Acme',
     requesterName: null,
     requesterEmail: null,
+    lastRequesterReplyAt: null,
+    lastAgentReplyAt: null,
   };
 }
 
