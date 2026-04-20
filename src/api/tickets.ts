@@ -1,6 +1,7 @@
 import type { Ticket } from "../types/ticket";
 import type { ZDComment } from "../types/comment";
 import { zdFetch } from "./zendesk";
+import { CHAT_PLAN_OPTIONS, FEED_PLAN_OPTIONS, VIDEO_PLAN_OPTIONS } from "../data/subscriptionPlans";
 
 export interface ZDTicketField {
   id: number;
@@ -50,28 +51,41 @@ function domainFromEmail(email: string | undefined): string | null {
   return domain.charAt(0).toUpperCase() + domain.slice(1);
 }
 
-const PRO_PLAN_KEYWORDS = [
-  "_startup",
-  "_standard",
-  "_premium",
-  "_scale",
-  "_growth",
-  "_mau",
-  "_pro",
-  "_paid",
-];
+// --- Tier classification driven by subscriptionPlans.ts (source of truth) ---
+
+const CHAT_FREE_TAGS = new Set(["no_chat", "trial_expired", "chat_free", "maker_chat"]);
+const FEEDS_FREE_TAGS = new Set(["no_plan", "feeds_free", "maker_feeds"]);
+const VIDEO_FREE_TAGS = new Set(["video_non_enterprise"]);
+
+// Enterprise values contain "enterprise" in the tag value (except video_non_enterprise which is free)
+const isEnterprisePlanTag = (v: string) =>
+  v.includes("enterprise") && v !== "video_non_enterprise";
+
+// Paid = known plan tag that is neither free nor enterprise
+const PAID_PLAN_TAGS = new Set<string>([
+  ...CHAT_PLAN_OPTIONS.map((o) => o.value).filter((v) => !CHAT_FREE_TAGS.has(v) && !isEnterprisePlanTag(v)),
+  ...FEED_PLAN_OPTIONS.map((o) => o.value).filter((v) => !FEEDS_FREE_TAGS.has(v) && !isEnterprisePlanTag(v)),
+  ...VIDEO_PLAN_OPTIONS.map((o) => o.value).filter((v) => !VIDEO_FREE_TAGS.has(v) && !isEnterprisePlanTag(v)),
+]);
+
+const ENT_PLAN_TAGS = new Set<string>([
+  ...CHAT_PLAN_OPTIONS.map((o) => o.value).filter(isEnterprisePlanTag),
+  ...FEED_PLAN_OPTIONS.map((o) => o.value).filter(isEnterprisePlanTag),
+  ...VIDEO_PLAN_OPTIONS.map((o) => o.value).filter(isEnterprisePlanTag),
+]);
 
 function deriveTier(tags: string[]): Ticket["tier"] {
-  if (
-    tags.some((t) => t.includes("enterprise") && !t.includes("non_enterprise"))
-  )
-    return "enterprise";
-  // Tag '1' = Stream's Tier-1 account flag → highest priority, route to priority open
+  // Tag '1' = Stream Tier-1 account flag
   if (tags.includes("1")) return "enterprise";
-  if (tags.some((t) => t === "free" || t.includes("_free"))) return "free";
-  if (tags.some((t) => PRO_PLAN_KEYWORDS.some((kw) => t.includes(kw))))
-    return "pro";
-  return "free"; // no recognisable plan tag → don't assume paid
+  // enterprise-new and similar account-level tags
+  if (tags.some((t) => t.includes("enterprise") && !t.includes("non_enterprise")))
+    return "enterprise";
+  // Explicit enterprise plan value from subscriptionPlans.ts
+  if (tags.some((t) => ENT_PLAN_TAGS.has(t))) return "enterprise";
+  // Any paid plan across chat / feeds / video → pro
+  if (tags.some((t) => PAID_PLAN_TAGS.has(t))) return "pro";
+  // Everything else is free
+  return "free";
 }
 
 function deriveHoldType(
