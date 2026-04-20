@@ -63,6 +63,13 @@ src/
 - Never define a component inside another component's render function
 - Use `import type` for type-only imports (`verbatimModuleSyntax` is enabled)
 
+## ZD Data Integrity — NEVER do without explicit user approval
+
+- **Never create new ZD custom fields.** Custom field IDs written to ZD must already exist in Zendesk. The only safe source of field IDs is `fetchFormFields()` which reads them from ZD's own ticket form definition.
+- **Never write local-only `Ticket` fields back to ZD.** Fields added for local enrichment (`tier`, `holdType`, `linear`, `requesterName`, `requesterEmail`, `lastRequesterReplyAt`, `lastAgentReplyAt`, etc.) must never appear in a ZD API PUT body. All write functions in `src/api/tickets.ts` must explicitly whitelist only the fields ZD understands.
+- **Never add a new PUT/POST/DELETE to a ZD endpoint without the user's explicit instruction.** Read operations (GET) are fine to add; write operations require sign-off.
+- When in doubt about whether a field or operation touches ZD data, ask before implementing.
+
 ## TypeScript
 
 Strict mode: `noUnusedLocals`, `noUnusedParameters`, `noFallthroughCasesInSwitch` are all on. Target ES2023.

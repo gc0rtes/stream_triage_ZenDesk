@@ -328,15 +328,6 @@ export async function fetchFormFields(formId: number): Promise<{
   };
 }
 
-export async function updateCustomFields(
-  ticketId: number,
-  customFields: CustomFieldValue[],
-): Promise<void> {
-  await zdFetch<unknown>(`/tickets/${ticketId}.json`, {
-    method: "PUT",
-    body: JSON.stringify({ ticket: { custom_fields: customFields } }),
-  });
-}
 
 export async function submitReply(
   id: number,
