@@ -37,9 +37,9 @@ export function TierBadge({ tier }: TierBadgeProps) {
     <span style={{
       fontSize: 10, fontFamily: 'var(--mono)', letterSpacing: 0.6, fontWeight: 600,
       padding: '2px 5px', borderRadius: 3,
-      background: isEnt ? 'var(--accent-soft)' : 'var(--surface-2)',
-      color:      isEnt ? 'var(--accent)'      : 'var(--text-dim)',
-      border: isEnt ? '1px solid var(--accent)' : '1px solid var(--border-strong)',
+      background: isEnt ? 'var(--tier-ent-soft)' : 'var(--surface-2)',
+      color:      isEnt ? 'var(--tier-ent)'      : 'var(--text-dim)',
+      border: isEnt ? '1px solid var(--tier-ent)' : '1px solid var(--border-strong)',
       textTransform: 'uppercase', whiteSpace: 'nowrap',
     }}>{meta?.label ?? tier}</span>
   );
@@ -98,7 +98,7 @@ export function TicketCard({ t, nowMs, staleHours, onOpen, onAssign, style, styl
   const railColor =
     stale        ? 'var(--danger)' :
     approaching  ? 'var(--warn)'   :
-    isEnt        ? 'var(--accent)' :
+    isEnt        ? 'var(--tier-ent)' :
     t.status === 'pending'           ? 'var(--info)'   :
     t.holdType === 'linear'          ? 'var(--violet)' :
     t.holdType === 'feature_request' ? 'var(--warn)'   :

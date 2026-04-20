@@ -43,6 +43,8 @@ const defaultProps = {
   nowMs: NOW,
   staleHours: 48,
   showBurst: true,
+  theme: 'warm-coal',
+  onThemeChange: vi.fn(),
 };
 
 describe('TopBar', () => {

@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import type { Ticket } from '../types/ticket';
 import { TIER_META, ASSIGNEES } from '../data/columns';
+import { THEMES } from '../theme';
+import type { ThemeKey } from '../theme';
 import { AssigneeChip } from './Board/TicketCard';
 import {
-  IconSearch, IconX, IconPlus, IconRefresh, IconColumns,
+  IconSearch, IconX, IconPlus, IconRefresh, IconColumns, IconGear, IconCheck,
 } from './icons';
 
 interface BurstMeterProps {
@@ -125,6 +128,8 @@ interface TopBarProps {
   nowMs: number;
   staleHours: number;
   showBurst: boolean;
+  theme: string;
+  onThemeChange: (t: ThemeKey) => void;
 }
 
 export function TopBar({
@@ -133,7 +138,10 @@ export function TopBar({
   assigneeFilter, setAssigneeFilter,
   onBurst, onRefresh, isRefreshing, onToggleColConfig, colConfigActive,
   tickets, nowMs, staleHours, showBurst,
+  theme, onThemeChange,
 }: TopBarProps) {
+  const [showPrefs, setShowPrefs] = useState(false);
+
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 14,
@@ -261,6 +269,90 @@ export function TopBar({
           animation: isRefreshing ? 'spin 0.8s linear infinite' : 'none',
         }} />
       </button>
+
+      {/* preferences gear */}
+      <div style={{ position: 'relative' }}>
+        <button
+          onClick={() => setShowPrefs(v => !v)}
+          title="Preferences"
+          style={{
+            padding: 7, borderRadius: 5,
+            background: showPrefs ? 'var(--accent-soft)' : 'transparent',
+            color: showPrefs ? 'var(--accent)' : 'var(--text-dim)',
+            border: `1px solid ${showPrefs ? 'var(--accent)' : 'var(--border)'}`,
+            cursor: 'pointer', display: 'inline-flex', alignItems: 'center',
+          }}
+        >
+          <IconGear size={13} />
+        </button>
+
+        {showPrefs && (
+          <>
+            <div onClick={() => setShowPrefs(false)} style={{ position: 'fixed', inset: 0, zIndex: 25 }} />
+            <div style={{
+              position: 'absolute', top: 'calc(100% + 8px)', right: 0, zIndex: 30,
+              background: 'var(--surface)', border: '1px solid var(--border)',
+              borderRadius: 8, boxShadow: '0 8px 32px rgba(0,0,0,0.45)',
+              padding: '14px 16px', minWidth: 260,
+            }}>
+              <div style={{
+                fontSize: 10, fontFamily: 'var(--mono)', color: 'var(--text-mute)',
+                textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12,
+                display: 'flex', alignItems: 'center', gap: 6,
+              }}>
+                <IconGear size={10} /> Preferences
+              </div>
+
+              <div style={{
+                fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.6,
+                color: 'var(--text-mute)', marginBottom: 8, fontWeight: 600,
+              }}>Theme</div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                {(Object.entries(THEMES) as [ThemeKey, typeof THEMES[ThemeKey]][]).map(([key, def]) => {
+                  const active = theme === key;
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => { onThemeChange(key); setShowPrefs(false); }}
+                      style={{
+                        background: active ? 'var(--accent-soft)' : 'var(--bg-2)',
+                        border: `1px solid ${active ? 'var(--accent)' : 'var(--border)'}`,
+                        borderRadius: 6, padding: '10px 10px 8px',
+                        cursor: 'pointer', textAlign: 'left',
+                        transition: 'border-color 0.15s, background 0.15s',
+                      }}
+                      onMouseEnter={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-strong)'; }}
+                      onMouseLeave={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border)'; }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 6 }}>
+                        {def.swatches.map((color, i) => (
+                          <div key={i} style={{
+                            width: i === 0 ? 18 : 12, height: i === 0 ? 18 : 12,
+                            borderRadius: '50%', background: color,
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            flexShrink: 0,
+                          }} />
+                        ))}
+                        {active && (
+                          <div style={{ marginLeft: 'auto' }}>
+                            <IconCheck size={11} style={{ color: 'var(--accent)' }} />
+                          </div>
+                        )}
+                      </div>
+                      <div style={{
+                        fontSize: 11, fontWeight: 600,
+                        color: active ? 'var(--accent)' : 'var(--text)',
+                        whiteSpace: 'nowrap',
+                      }}>{def.name}</div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }

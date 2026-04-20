@@ -31,7 +31,8 @@ const DEFAULT_COL_SORT: Record<ColumnKey, SortMode> = {
 };
 import { COLUMNS } from '../../data/columns';
 import { classifyTicket } from '../../utils/classifyTicket';
-import { makeCssVars, ACCENT_PRESETS } from '../../theme';
+import { makeCssVars, ACCENT_PRESETS, THEMES } from '../../theme';
+import type { ThemeKey } from '../../theme';
 import { useTickets } from '../../hooks/useTickets';
 import { useIncrementalSync } from '../../hooks/useIncrementalSync';
 import { useUpdateTicket } from '../../hooks/useUpdateTicket';
@@ -108,6 +109,7 @@ export default function Board() {
   const [columnSorts, setColumnSorts] = useState<Record<ColumnKey, SortMode>>(DEFAULT_COL_SORT);
   const [tweaks, setTweaks] = useState<Tweaks>({
     accent: 'green',
+    theme: (localStorage.getItem('zd-theme') ?? 'warm-coal'),
     density: 'comfortable',
     staleHours: 48,
     cardVariant: 'rail',
@@ -130,6 +132,11 @@ export default function Board() {
   const updateTweaks = useCallback((t: Tweaks) => {
     setTweaks(t);
     window.parent.postMessage({ type: '__edit_mode_set_keys', edits: t }, '*');
+  }, []);
+
+  const handleThemeChange = useCallback((t: ThemeKey) => {
+    localStorage.setItem('zd-theme', t);
+    setTweaks(prev => ({ ...prev, theme: t }));
   }, []);
 
   // Artificial aging: nudge open ticket timestamps back 2 min every 60s
@@ -238,7 +245,8 @@ export default function Board() {
   }, []);
 
   const accentHue = ACCENT_PRESETS[tweaks.accent as keyof typeof ACCENT_PRESETS]?.hue ?? 145;
-  const cssVars = makeCssVars({ accentHue });
+  const themeKey = (tweaks.theme in THEMES ? tweaks.theme : 'warm-coal') as ThemeKey;
+  const cssVars = makeCssVars({ accentHue, theme: themeKey });
   const colWidth = tweaks.columnWidth === 'narrow' ? 272 : 316;
 
   return (
@@ -269,6 +277,8 @@ export default function Board() {
         nowMs={nowMs}
         staleHours={tweaks.staleHours}
         showBurst={tweaks.showBurst}
+        theme={tweaks.theme}
+        onThemeChange={handleThemeChange}
       />
       <div style={{ position: 'relative' }}>
         {showColConfig && (

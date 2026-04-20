@@ -4,6 +4,7 @@ import { IconSparkle } from './icons';
 
 export interface Tweaks {
   accent: string;
+  theme: string;
   density: string;
   staleHours: number;
   cardVariant: string;
