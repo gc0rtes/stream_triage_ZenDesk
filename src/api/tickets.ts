@@ -120,6 +120,7 @@ function mapZDTicket(t: RawZDTicket, maps: SideloadMaps = { userMap: {}, orgMap:
       ? (maps.orgMap[t.organization_id] ?? "Org-" + String(t.organization_id).slice(-5))
       : (domainFromEmail(t.requester_id ? maps.emailMap[t.requester_id] : undefined) ?? "Unknown"),
     requesterName: t.requester_id ? (maps.userMap[t.requester_id] ?? null) : null,
+    requesterEmail: t.requester_id ? (maps.emailMap[t.requester_id] ?? null) : null,
   };
 }
 

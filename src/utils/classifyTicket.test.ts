@@ -19,6 +19,7 @@ const base: Ticket = {
   linear: null,
   customer: 'ACME',
     requesterName: null,
+    requesterEmail: null,
 };
 
 describe('classifyTicket', () => {

@@ -20,6 +20,7 @@ function makeTicket(id: number): Ticket {
     linear: null,
     customer: 'Acme',
     requesterName: null,
+    requesterEmail: null,
   };
 }
 

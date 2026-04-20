@@ -21,6 +21,7 @@ const MOCK_TICKETS: Ticket[] = [
     linear: null,
     customer: 'AcmeCorp',
     requesterName: null,
+    requesterEmail: null,
   },
 ]
 

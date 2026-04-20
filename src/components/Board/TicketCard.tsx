@@ -180,11 +180,20 @@ export function TicketCard({ t, nowMs, staleHours, onOpen, onAssign, style, styl
           fontSize: 12, fontWeight: 600, color: 'var(--text)',
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}>{t.customer}</span>
-        {t.requesterName && (
-          <span style={{
-            fontSize: 10, color: 'var(--text-mute)',
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-          }}>{t.requesterName}</span>
+        {t.requesterEmail && (
+          <a
+            href={`https://getstream.io/nessy/?q=${encodeURIComponent(t.requesterEmail)}`}
+            target="_blank"
+            rel="noreferrer"
+            onClick={e => e.stopPropagation()}
+            style={{
+              fontSize: 10, color: 'var(--accent)',
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              textDecoration: 'none', display: 'block',
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.textDecoration = 'underline' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.textDecoration = 'none' }}
+          >{t.requesterEmail}</a>
         )}
       </div>
 

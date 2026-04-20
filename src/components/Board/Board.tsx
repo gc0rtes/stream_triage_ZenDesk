@@ -179,6 +179,7 @@ export default function Board() {
       linear: null,
       holdType: null,
       requesterName: null,
+      requesterEmail: null,
     }));
     setBurstTickets(ts => [...newTickets, ...ts]);
   }, []);
