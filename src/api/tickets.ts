@@ -25,6 +25,29 @@ interface RawZDTicket {
   updated_at: string;
   assignee_id: number | null;
   organization_id: number | null;
+  requester_id: number | null;
+}
+
+interface SideloadMaps {
+  userMap: Record<number, string>;
+  orgMap: Record<number, string>;
+  emailMap: Record<number, string>;
+}
+
+const FREE_EMAIL_DOMAINS = new Set([
+  "gmail", "yahoo", "hotmail", "outlook", "icloud", "aol",
+  "protonmail", "zoho", "yandex", "live", "msn", "me",
+]);
+
+function domainFromEmail(email: string | undefined): string | null {
+  if (!email) return null;
+  const host = email.split("@")[1];
+  if (!host) return null;
+  const parts = host.split(".");
+  // Take the second-to-last segment (e.g. "bar" from "foo.bar.com")
+  const domain = parts.length >= 2 ? parts[parts.length - 2] : parts[0];
+  if (FREE_EMAIL_DOMAINS.has(domain.toLowerCase())) return null;
+  return domain.charAt(0).toUpperCase() + domain.slice(1);
 }
 
 const PRO_PLAN_KEYWORDS = [
@@ -60,7 +83,7 @@ function deriveHoldType(
   return "linear";
 }
 
-function mapZDTicket(t: RawZDTicket): Ticket {
+function mapZDTicket(t: RawZDTicket, maps: SideloadMaps = { userMap: {}, orgMap: {}, emailMap: {} }): Ticket {
   const status =
     t.status === "new" || t.status === "closed" ? "open" : t.status;
   return {
@@ -80,8 +103,9 @@ function mapZDTicket(t: RawZDTicket): Ticket {
       t.assignee_id === MY_ASSIGNEE_ID ? "GC" : t.assignee_id ? "OTHER" : "",
     linear: null,
     customer: t.organization_id
-      ? "Org-" + String(t.organization_id).slice(-5)
-      : "Unknown",
+      ? (maps.orgMap[t.organization_id] ?? "Org-" + String(t.organization_id).slice(-5))
+      : (domainFromEmail(t.requester_id ? maps.emailMap[t.requester_id] : undefined) ?? "Unknown"),
+    requesterName: t.requester_id ? (maps.userMap[t.requester_id] ?? null) : null,
   };
 }
 
@@ -93,8 +117,10 @@ export async function fetchIncrementalTickets(startTimeSec: number): Promise<{
     tickets: RawZDTicket[] | null;
     end_time: number | null;
   }>(`/incremental/tickets.json?start_time=${startTimeSec}&per_page=100`);
+  const rawTickets = data.tickets ?? [];
+  const maps = rawTickets.length ? await fetchNameMaps(rawTickets) : { orgMap: {}, userMap: {}, emailMap: {} };
   return {
-    tickets: (data.tickets ?? []).map(mapZDTicket),
+    tickets: rawTickets.map((t) => mapZDTicket(t, maps)),
     // ZD returns null end_time when no records match — fall back to the input cursor
     endTime: data.end_time ?? startTimeSec,
   };
@@ -104,6 +130,26 @@ function zdSearch(query: string, perPage = 100) {
   return zdFetch<{ results: RawZDTicket[] }>(
     `/search.json?${new URLSearchParams({ query, per_page: String(perPage) })}`,
   );
+}
+
+async function fetchNameMaps(rawTickets: RawZDTicket[]): Promise<SideloadMaps> {
+  const orgIds = [...new Set(rawTickets.map((t) => t.organization_id).filter((id): id is number => id != null))];
+  const userIds = [...new Set(rawTickets.map((t) => t.requester_id).filter((id): id is number => id != null))];
+
+  const [orgsData, usersData] = await Promise.all([
+    orgIds.length
+      ? zdFetch<{ organizations: Array<{ id: number; name: string }> }>(`/organizations/show_many.json?ids=${orgIds.join(",")}`)
+      : Promise.resolve({ organizations: [] }),
+    userIds.length
+      ? zdFetch<{ users: Array<{ id: number; name: string; email: string }> }>(`/users/show_many.json?ids=${userIds.join(",")}`)
+      : Promise.resolve({ users: [] }),
+  ]);
+
+  return {
+    orgMap: Object.fromEntries(orgsData.organizations.map((o) => [o.id, o.name])),
+    userMap: Object.fromEntries(usersData.users.map((u) => [u.id, u.name])),
+    emailMap: Object.fromEntries(usersData.users.map((u) => [u.id, u.email])),
+  };
 }
 
 export async function fetchTickets(): Promise<Ticket[]> {
@@ -122,14 +168,17 @@ export async function fetchTickets(): Promise<Ticket[]> {
       zdSearch(`type:ticket ${me} status:solved updated>${sevenDaysAgo}`, 50),
     ]);
 
-  return [
+  const allRaw = [
     ...myOpen.results,
     ...myPending.results,
     ...myHold.results,
     ...myNew.results,
     ...unassigned.results,
     ...mySolved.results,
-  ].map(mapZDTicket);
+  ];
+
+  const maps = await fetchNameMaps(allRaw);
+  return allRaw.map((t) => mapZDTicket(t, maps));
 }
 
 export async function updateTicketStatus(

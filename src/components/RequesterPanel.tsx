@@ -107,6 +107,7 @@ function RequesterInfoBody({ info, nowMs }: RequesterInfoBodyProps) {
           <InfoRow label="Email" value={
             <a href={`mailto:${info.email}`} style={{ color: 'var(--accent)', textDecoration: 'none' }}>{info.email}</a>
           } />
+          {info.organization_name && <InfoRow label="Organization" value={info.organization_name} />}
           <InfoRow label="Local time" value={localTime(info.time_zone, nowMs)} />
           <InfoRow label="Language" value={info.locale} />
           {info.notes && <InfoRow label="Notes" value={<span style={{ whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>{info.notes}</span>} />}

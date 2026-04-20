@@ -19,6 +19,7 @@ function makeTicket(id: number, subject: string): Ticket {
     assignee: 'MK',
     linear: null,
     customer: 'Acme',
+    requesterName: null,
   };
 }
 

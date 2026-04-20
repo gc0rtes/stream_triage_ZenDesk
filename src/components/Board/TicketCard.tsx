@@ -173,13 +173,19 @@ export function TicketCard({ t, nowMs, staleHours, onOpen, onAssign, style, styl
       </div>
 
       <div style={{
-        display: 'flex', alignItems: 'center', gap: 6,
-        fontSize: 12, color: 'var(--text-dim)', marginBottom: 10,
+        display: 'flex', flexDirection: 'column', gap: 1,
+        marginBottom: 10,
       }}>
         <span style={{
+          fontSize: 12, fontWeight: 600, color: 'var(--text)',
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-          maxWidth: 180,
         }}>{t.customer}</span>
+        {t.requesterName && (
+          <span style={{
+            fontSize: 10, color: 'var(--text-mute)',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>{t.requesterName}</span>
+        )}
       </div>
 
       <div style={{

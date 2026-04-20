@@ -12,6 +12,7 @@ export interface ZDTicket {
   assignee: string;
   linear: string | null;
   customer: string;
+  requesterName: string | null;
 }
 
 export type Ticket = ZDTicket;

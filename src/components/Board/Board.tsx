@@ -178,6 +178,7 @@ export default function Board() {
       assignee: ASSIGNEE_CYCLE[i % 4],
       linear: null,
       holdType: null,
+      requesterName: null,
     }));
     setBurstTickets(ts => [...newTickets, ...ts]);
   }, []);
