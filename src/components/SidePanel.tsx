@@ -14,6 +14,7 @@ import { useFormFields } from '../hooks/useFormFields'
 import { useAgents } from '../hooks/useAgents'
 import { MY_ASSIGNEE_ID, uploadAttachment } from '../api/tickets'
 import { useToast } from './Toast'
+import { RequesterPanel } from './RequesterPanel'
 
 // Form 5.0 ID — the default ticket form for getstream ZD
 const FORM_5_ID = 37257437662487
@@ -326,6 +327,7 @@ function TicketPropertiesPanel({ ticket, full, pendingAssigneeId, onAssigneeChan
 }
 
 export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
+  const [activeTab, setActiveTab] = useState<'thread' | 'info'>('thread')
   const [body, setBody] = useState('')
   const [isPublic, setIsPublic] = useState(true)
   const [submitAs, setSubmitAs] = useState('open')
@@ -348,10 +350,11 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
   const { data: macrosData } = useMacros()
   const macros = macrosData ?? []
 
-  // Reset pending state when a different ticket is opened
+  // Reset pending state and active tab when a different ticket is opened
   useEffect(() => {
     setPendingAssigneeId(undefined)
     setPendingFields({})
+    setActiveTab('thread')
   }, [ticket?.id])
 
   useEffect(() => {
@@ -461,14 +464,14 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
 
       {/* Subject + metadata */}
       <div style={{
-        padding: '14px 18px', borderBottom: '1px solid var(--border)',
+        padding: '14px 18px 0', borderBottom: '1px solid var(--border)',
         background: 'var(--surface)', flexShrink: 0,
       }}>
         <div style={{
           fontSize: 16, fontWeight: 600, color: 'var(--text)',
           lineHeight: 1.35, marginBottom: 10, letterSpacing: -0.1,
         }}>{ticket.subject}</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontSize: 12, color: 'var(--text-dim)', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontSize: 12, color: 'var(--text-dim)', flexWrap: 'wrap', marginBottom: 12 }}>
           <span>{ticket.customer}</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
             <AssigneeChip id={ticket.assignee} size={16} />
@@ -483,46 +486,67 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
             </span>
           )}
         </div>
+        {/* Tab switcher */}
+        <div style={{ display: 'flex', gap: 0, borderTop: '1px solid var(--border)', marginLeft: -18, marginRight: -18, paddingLeft: 18 }}>
+          {(['thread', 'info'] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              style={{
+                background: 'transparent', border: 'none', cursor: 'pointer',
+                padding: '8px 14px', fontSize: 12, fontWeight: 600,
+                color: activeTab === tab ? 'var(--accent)' : 'var(--text-mute)',
+                borderBottom: activeTab === tab ? '2px solid var(--accent)' : '2px solid transparent',
+                marginBottom: -1, letterSpacing: 0.2,
+                textTransform: 'capitalize',
+              }}
+            >{tab === 'thread' ? 'Thread' : 'Requester'}</button>
+          ))}
+        </div>
       </div>
 
-      {/* Thread */}
-      <div ref={threadRef} style={{ flex: 1, overflow: 'auto', padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-        {isLoading && <div style={{ color: 'var(--text-mute)', fontSize: 12, textAlign: 'center', padding: 24 }}>Loading conversation…</div>}
-        {!isLoading && comments.length === 0 && <div style={{ color: 'var(--text-mute)', fontSize: 12, textAlign: 'center', padding: 24 }}>No messages yet.</div>}
-        {comments.map(c => {
-          const isMe = c.author_id === MY_ASSIGNEE_ID
-          return (
-            <div key={c.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4, flexDirection: isMe ? 'row-reverse' : 'row' }}>
-                <span style={{ fontSize: 11, fontWeight: 600, color: isMe ? 'var(--accent)' : 'var(--text-dim)' }}>{c.author_name}</span>
-                <span style={{ fontSize: 10, color: 'var(--text-mute)', fontFamily: 'var(--mono)' }}>
-                  {timeSince(new Date(c.created_at).getTime(), nowMs)} ago
-                </span>
-                {!c.public && (
-                  <span style={{
-                    fontSize: 9, padding: '1px 5px', borderRadius: 3,
-                    background: 'var(--warn-soft)', color: 'var(--warn)',
-                    border: '1px solid var(--warn)', fontWeight: 600,
-                    textTransform: 'uppercase', letterSpacing: 0.4,
-                  }}>Internal</span>
-                )}
+      {/* Tab content */}
+      {activeTab === 'info'
+        ? <RequesterPanel requesterId={full?.requester_id} nowMs={nowMs} />
+        : <>
+        {/* Thread */}
+        <div ref={threadRef} style={{ flex: 1, overflow: 'auto', padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {isLoading && <div style={{ color: 'var(--text-mute)', fontSize: 12, textAlign: 'center', padding: 24 }}>Loading conversation…</div>}
+          {!isLoading && comments.length === 0 && <div style={{ color: 'var(--text-mute)', fontSize: 12, textAlign: 'center', padding: 24 }}>No messages yet.</div>}
+          {comments.map(c => {
+            const isMe = c.author_id === MY_ASSIGNEE_ID
+            return (
+              <div key={c.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4, flexDirection: isMe ? 'row-reverse' : 'row' }}>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: isMe ? 'var(--accent)' : 'var(--text-dim)' }}>{c.author_name}</span>
+                  <span style={{ fontSize: 10, color: 'var(--text-mute)', fontFamily: 'var(--mono)' }}>
+                    {timeSince(new Date(c.created_at).getTime(), nowMs)} ago
+                  </span>
+                  {!c.public && (
+                    <span style={{
+                      fontSize: 9, padding: '1px 5px', borderRadius: 3,
+                      background: 'var(--warn-soft)', color: 'var(--warn)',
+                      border: '1px solid var(--warn)', fontWeight: 600,
+                      textTransform: 'uppercase', letterSpacing: 0.4,
+                    }}>Internal</span>
+                  )}
+                </div>
+                <div style={{
+                  maxWidth: '80%', padding: '10px 14px', borderRadius: 8,
+                  background: isMe ? 'var(--accent-soft)' : 'var(--surface)',
+                  border: `1px solid ${isMe ? 'var(--accent)' : 'var(--border)'}`,
+                  fontSize: 13, color: 'var(--text)', lineHeight: 1.5,
+                  borderTopRightRadius: isMe ? 2 : 8,
+                  borderTopLeftRadius: isMe ? 8 : 2,
+                  whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+                }}>
+                  {c.body}
+                  {c.attachments?.map(att => <AttachmentPreview key={att.id} att={att} />)}
+                </div>
               </div>
-              <div style={{
-                maxWidth: '80%', padding: '10px 14px', borderRadius: 8,
-                background: isMe ? 'var(--accent-soft)' : 'var(--surface)',
-                border: `1px solid ${isMe ? 'var(--accent)' : 'var(--border)'}`,
-                fontSize: 13, color: 'var(--text)', lineHeight: 1.5,
-                borderTopRightRadius: isMe ? 2 : 8,
-                borderTopLeftRadius: isMe ? 8 : 2,
-                whiteSpace: 'pre-wrap', wordBreak: 'break-word',
-              }}>
-                {c.body}
-                {c.attachments?.map(att => <AttachmentPreview key={att.id} att={att} />)}
-              </div>
-            </div>
-          )
-        })}
-      </div>
+            )
+          })}
+        </div>
 
       {/* Reply box */}
       <div style={{ padding: '12px 18px', borderTop: '1px solid var(--border)', background: 'var(--surface)', flexShrink: 0, position: 'relative' }}>
@@ -652,6 +676,7 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
           </div>
         </div>
       </div>
+      </>}
     </div>
   )
 
