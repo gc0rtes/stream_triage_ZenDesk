@@ -12,6 +12,7 @@ export interface ZDComment {
   author_id: number
   author_name: string
   body: string
+  html_body?: string
   public: boolean
   created_at: string
   attachments: ZDAttachment[]

@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import type { ChangeEvent } from 'react'
+import type { RichTextEditorHandle } from './RichTextEditor'
+import { RichTextEditor } from './RichTextEditor'
 import type { Ticket } from '../types/ticket'
 import type { ZDMacro, FullTicket, ZDTicketField, CustomFieldValue } from '../api/tickets'
 import type { ZDAttachment } from '../types/comment'
@@ -343,6 +345,7 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
   const [pendingFields, setPendingFields] = useState<Record<number, CustomFieldValue['value']>>({})
   const threadRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const editorRef = useRef<RichTextEditorHandle>(null)
 
   const { showToast } = useToast()
   const queryClient = useQueryClient()
@@ -409,8 +412,11 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
 
   const handleApplyMacro = (macro: ZDMacro) => {
     for (const action of macro.actions) {
-      if (action.field === 'comment_value') setBody(String(action.value))
-      if (action.field === 'comment_value_html') setBody(String(action.value).replace(/<[^>]+>/g, ''))
+      if (action.field === 'comment_value_html') {
+        editorRef.current?.setContent(String(action.value))
+      } else if (action.field === 'comment_value') {
+        editorRef.current?.setContent(`<p>${String(action.value)}</p>`)
+      }
       if (action.field === 'status' && ['open', 'pending', 'hold', 'solved'].includes(String(action.value)))
         setSubmitAs(String(action.value))
       if (action.field === 'comment_mode_is_public') setIsPublic(action.value === 'true')
@@ -425,7 +431,7 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
     setSubmitAs(status)
     setShowStatusMenu(false)
 
-    const trimmed = body.trim()
+    const htmlBody = body.trim() || undefined
     const uploads = attachments.filter(a => a.token).map(a => a.token!)
     const customFields = Object.entries(pendingFields).map(([id, value]) => ({ id: Number(id), value }))
     const assigneeId = pendingAssigneeId
@@ -433,10 +439,11 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
     const onSuccess = () => { showToast(ticket.id, status); onClose() }
 
     reply.mutate(
-      { body: trimmed || undefined, isPublic, status, uploads: uploads.length ? uploads : undefined, assigneeId, customFields: customFields.length ? customFields : undefined },
+      { htmlBody, isPublic, status, uploads: uploads.length ? uploads : undefined, assigneeId, customFields: customFields.length ? customFields : undefined },
       { onSuccess },
     )
     setBody('')
+    editorRef.current?.clear()
     setAttachments([])
     setPendingAssigneeId(undefined)
     setPendingFields({})
@@ -561,9 +568,12 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
                   fontSize: 13, color: 'var(--text)', lineHeight: 1.5,
                   borderTopRightRadius: isMe ? 2 : 8,
                   borderTopLeftRadius: isMe ? 8 : 2,
-                  whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+                  wordBreak: 'break-word',
                 }}>
-                  {c.body}
+                  {c.html_body
+                    ? <div className="tiptap-prose" dangerouslySetInnerHTML={{ __html: c.html_body }} />
+                    : <span style={{ whiteSpace: 'pre-wrap' }}>{c.body}</span>
+                  }
                   {c.attachments?.map(att => <AttachmentPreview key={att.id} att={att} />)}
                 </div>
               </div>
@@ -585,19 +595,12 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
             }}>{mode === 'public' ? 'Public reply' : 'Internal note'}</button>
           ))}
         </div>
-        <textarea
-          value={body}
-          onChange={e => setBody(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSend() }}
+        <RichTextEditor
+          ref={editorRef}
+          onChange={setBody}
           placeholder={isPublic ? 'Write a reply to the customer…' : 'Write an internal note…'}
-          rows={4}
-          style={{
-            width: '100%', resize: 'vertical', boxSizing: 'border-box',
-            background: 'var(--bg-2)', color: 'var(--text)',
-            border: `1px solid ${isPublic ? 'var(--border)' : 'var(--warn)'}`,
-            borderRadius: 6, padding: '10px 12px', fontSize: 13,
-            fontFamily: 'inherit', lineHeight: 1.5, outline: 'none', marginBottom: 8,
-          }}
+          isPublic={isPublic}
+          onKeyboardSubmit={handleSend}
         />
         {attachments.length > 0 && (
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 6 }}>

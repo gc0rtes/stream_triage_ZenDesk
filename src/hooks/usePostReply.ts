@@ -6,12 +6,12 @@ export function usePostReply(ticketId: number | null) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (vars: { body?: string; isPublic?: boolean; status?: string; uploads?: string[]; assigneeId?: number | null; customFields?: Array<{ id: number; value: string | string[] | boolean | null }> }) =>
+    mutationFn: (vars: { body?: string; htmlBody?: string; isPublic?: boolean; status?: string; uploads?: string[]; assigneeId?: number | null; customFields?: Array<{ id: number; value: string | string[] | boolean | null }> }) =>
       submitReply(ticketId!, vars),
-    onMutate: async ({ body, isPublic }) => {
+    onMutate: async ({ body, htmlBody, isPublic }) => {
       await queryClient.cancelQueries({ queryKey: ['ticket', ticketId] })
       const prev = queryClient.getQueryData<FullTicket>(['ticket', ticketId])
-      if (body?.trim()) {
+      if (htmlBody?.trim() || body?.trim()) {
         queryClient.setQueryData<FullTicket>(['ticket', ticketId], old => {
           if (!old) return old
           return {
@@ -20,7 +20,8 @@ export function usePostReply(ticketId: number | null) {
               id: Date.now(),
               author_id: MY_ASSIGNEE_ID,
               author_name: 'Guilherme Cortes',
-              body,
+              body: body ?? '',
+              html_body: htmlBody,
               public: isPublic ?? true,
               created_at: new Date().toISOString(),
               attachments: [],

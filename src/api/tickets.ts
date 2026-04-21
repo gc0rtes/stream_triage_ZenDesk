@@ -333,6 +333,7 @@ export async function submitReply(
   id: number,
   opts: {
     body?: string;
+    htmlBody?: string;
     isPublic?: boolean;
     status?: string;
     uploads?: string[];
@@ -344,9 +345,10 @@ export async function submitReply(
   if (opts.status) ticket.status = opts.status;
   if (opts.assigneeId !== undefined) ticket.assignee_id = opts.assigneeId;
   if (opts.customFields?.length) ticket.custom_fields = opts.customFields;
-  if (opts.body?.trim()) {
+  const commentBody = opts.htmlBody?.trim() || opts.body?.trim();
+  if (commentBody) {
     ticket.comment = {
-      body: opts.body,
+      ...(opts.htmlBody?.trim() ? { html_body: opts.htmlBody } : { body: opts.body }),
       public: opts.isPublic ?? true,
       ...(opts.uploads?.length ? { uploads: opts.uploads } : {}),
     };
