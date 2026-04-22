@@ -74,18 +74,4 @@ body {
 .tiptap-prose th { background: var(--surface-2); font-weight: 600; color: var(--text-dim); }
 .tiptap-prose strong { font-weight: 700; }
 .tiptap-prose em { font-style: italic; }
-.tiptap-prose img { max-width: 100%; height: auto; min-height: 40px; border-radius: 6px; display: block; margin: 6px 0; background: var(--surface-2); }
-
-/* ── Inline image hover overlay ──────────────────────────── */
-.prose-img-wrap { position: relative; display: inline-block; line-height: 0; max-width: 100%; }
-.prose-img-open {
-  position: absolute; top: 8px; right: 8px;
-  background: rgba(0,0,0,0.78); color: #fff; border-radius: 6px;
-  padding: 5px 12px; font-size: 12px; font-weight: 700;
-  text-decoration: none; opacity: 0; pointer-events: none;
-  transition: opacity 0.15s; white-space: nowrap;
-  font-family: system-ui, sans-serif;
-  border: 1px solid rgba(255,255,255,0.25);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-}
-.prose-img-wrap:hover .prose-img-open { opacity: 1; pointer-events: auto; }
+.tiptap-prose img { max-width: 100%; height: auto; min-height: 40px; border-radius: 6px; display: block; margin: 6px 0; background: var(--surface-2); cursor: pointer; }

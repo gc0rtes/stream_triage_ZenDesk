@@ -405,18 +405,20 @@ function TicketPropertiesPanel({ ticket, full, pendingAssigneeId, onAssigneeChan
 }
 
 function ProseContent({ html }: { html: string }) {
-  const processed = html.replace(
-    /<img([^>]*?)(?:\s*\/?)>/gi,
-    (_, attrs: string) => {
-      const m = attrs.match(/src=["']([^"']*)["']/)
-      const src = m ? m[1] : ''
-      const openBtn = src
-        ? `<a href="${src}" target="_blank" rel="noreferrer noopener" class="prose-img-open">↗ Open</a>`
-        : ''
-      return `<span class="prose-img-wrap"><img${attrs}>${openBtn}</span>`
-    },
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement
+    if (target.tagName === 'IMG') {
+      const src = (target as HTMLImageElement).src
+      if (src) window.open(src, '_blank', 'noreferrer noopener')
+    }
+  }
+  return (
+    <div
+      className="tiptap-prose"
+      dangerouslySetInnerHTML={{ __html: html }}
+      onClick={handleClick}
+    />
   )
-  return <div className="tiptap-prose" dangerouslySetInnerHTML={{ __html: processed }} />
 }
 
 export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
