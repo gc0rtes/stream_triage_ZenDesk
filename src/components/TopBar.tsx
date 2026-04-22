@@ -4,92 +4,11 @@ import { TIER_META } from '../data/columns';
 import { THEMES } from '../theme';
 import type { ThemeKey } from '../theme';
 import {
-  IconSearch, IconX, IconPlus, IconRefresh, IconColumns, IconGear, IconCheck,
+  IconSearch, IconX, IconRefresh, IconColumns, IconGear, IconCheck,
 } from './icons';
 import { useAuth } from '../context/AuthContext';
 import type { ZDAgent } from '../api/tickets';
-
-interface BurstMeterProps {
-  tickets: Ticket[];
-  nowMs: number;
-  staleHours: number;
-}
-
-export function BurstMeter({ tickets, nowMs, staleHours }: BurstMeterProps) {
-  const open = tickets.filter(t => t.status === 'open');
-  const urgent = open.filter(t => {
-    const age = (nowMs - t.updatedAt) / 3600_000;
-    return age >= staleHours * 0.75;
-  });
-  const stale = urgent.filter(t => (nowMs - t.updatedAt) / 3600_000 >= staleHours);
-  const approaching = urgent.length - stale.length;
-  const total = open.length;
-
-  const level =
-    stale.length >= 3 ? 'critical' :
-    stale.length >= 1 || approaching >= 3 ? 'elevated' : 'calm';
-
-  const color =
-    level === 'critical' ? 'var(--danger)' :
-    level === 'elevated' ? 'var(--warn)' : 'var(--accent)';
-
-  const label =
-    level === 'critical' ? 'Burst · critical' :
-    level === 'elevated' ? 'Burst · elevated' : 'Steady';
-
-  return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 14,
-      padding: '6px 14px',
-      background: 'var(--surface)',
-      border: '1px solid var(--border)',
-      borderRadius: 6,
-      minWidth: 340,
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <div style={{
-          width: 8, height: 8, borderRadius: '50%',
-          background: color,
-          boxShadow: level !== 'calm' ? `0 0 8px ${color}` : 'none',
-          animation: level === 'critical' ? 'pulseHard 1.2s infinite' : 'none',
-        }} />
-        <span style={{
-          fontSize: 11, fontWeight: 600, color: 'var(--text)',
-          textTransform: 'uppercase', letterSpacing: 0.6,
-        }}>{label}</span>
-      </div>
-
-      <div style={{ width: 1, height: 18, background: 'var(--border)' }} />
-
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{
-          flex: 1, height: 6, borderRadius: 3, overflow: 'hidden',
-          background: 'var(--bg-2)', display: 'flex',
-        }}>
-          <div style={{
-            width: `${(stale.length / Math.max(total, 1)) * 100}%`,
-            background: 'var(--danger)',
-          }} />
-          <div style={{
-            width: `${(approaching / Math.max(total, 1)) * 100}%`,
-            background: 'var(--warn)',
-          }} />
-          <div style={{ flex: 1, background: 'var(--accent-soft)' }} />
-        </div>
-        <span style={{
-          fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-dim)',
-          whiteSpace: 'nowrap', fontWeight: 500,
-        }}>
-          <span style={{ color: 'var(--danger)' }}>{stale.length}</span>
-          <span style={{ color: 'var(--text-mute)', margin: '0 3px' }}>·</span>
-          <span style={{ color: 'var(--warn)' }}>{approaching}</span>
-          <span style={{ color: 'var(--text-mute)', margin: '0 3px' }}>/</span>
-          <span>{total}</span>
-        </span>
-      </div>
-    </div>
-  );
-}
+import { StatsBar } from './StatsBar';
 
 interface ColleagueChipProps {
   agent: ZDAgent;
@@ -98,7 +17,7 @@ interface ColleagueChipProps {
 }
 
 function ColleagueChip({ agent, active, onToggle }: ColleagueChipProps) {
-  const initials = agent.name.slice(0, 2).toUpperCase();
+  const initials = agent.name.split(' ').map((p: string) => p[0]).join('').toUpperCase().slice(0, 2);
   const hue = agent.id % 360;
   return (
     <button
@@ -148,8 +67,6 @@ interface TopBarProps {
   setQuery: (q: string) => void;
   tierFilter: Set<string>;
   setTierFilter: (s: Set<string>) => void;
-  onBurst: () => void;
-  onReset: () => void;
   onRefresh: () => void;
   isRefreshing: boolean;
   onToggleColConfig: () => void;
@@ -157,7 +74,7 @@ interface TopBarProps {
   tickets: Ticket[];
   nowMs: number;
   staleHours: number;
-  showBurst: boolean;
+  accentHue: number;
   theme: string;
   onThemeChange: (t: ThemeKey) => void;
 }
@@ -165,8 +82,8 @@ interface TopBarProps {
 export function TopBar({
   query, setQuery,
   tierFilter, setTierFilter,
-  onBurst, onRefresh, isRefreshing, onToggleColConfig, colConfigActive,
-  tickets, nowMs, staleHours, showBurst,
+  onRefresh, isRefreshing, onToggleColConfig, colConfigActive,
+  tickets, nowMs, staleHours, accentHue,
   theme, onThemeChange,
 }: TopBarProps) {
   const [showPrefs, setShowPrefs] = useState(false);
@@ -174,13 +91,13 @@ export function TopBar({
 
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: 14,
+      display: 'flex', alignItems: 'center', gap: 12,
       padding: '10px 18px', borderBottom: '1px solid var(--border)',
       background: 'var(--bg)',
       position: 'sticky', top: 0, zIndex: 20,
     }}>
       {/* logo */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginRight: 6 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginRight: 6, flexShrink: 0 }}>
         <div style={{
           width: 22, height: 22, borderRadius: 5,
           background: 'var(--accent)',
@@ -203,7 +120,7 @@ export function TopBar({
         display: 'flex', alignItems: 'center', gap: 6,
         background: 'var(--surface)',
         border: '1px solid var(--border)', borderRadius: 6,
-        padding: '6px 10px', minWidth: 240,
+        padding: '6px 10px', minWidth: 220, flexShrink: 0,
       }}>
         <IconSearch size={13} style={{ color: 'var(--text-mute)' }} />
         <input
@@ -224,7 +141,7 @@ export function TopBar({
       </div>
 
       {/* tier filters */}
-      <div style={{ display: 'flex', gap: 4 }}>
+      <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
         {(['enterprise', 'pro', 'free'] as const).map(tier => (
           <FilterChip
             key={tier}
@@ -239,22 +156,28 @@ export function TopBar({
       </div>
 
       {/* colleague chips — click to view their board */}
-      <div style={{ display: 'flex', gap: 4 }}>
-        {colleagues.map(agent => (
-          <ColleagueChip
-            key={agent.id}
-            agent={agent}
-            active={viewedAgentId === agent.id}
-            onToggle={() => setViewedAgentId(viewedAgentId === agent.id ? null : agent.id)}
-          />
-        ))}
-      </div>
+      {colleagues.length > 0 && (
+        <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+          {colleagues.map(agent => (
+            <ColleagueChip
+              key={agent.id}
+              agent={agent}
+              active={viewedAgentId === agent.id}
+              onToggle={() => setViewedAgentId(viewedAgentId === agent.id ? null : agent.id)}
+            />
+          ))}
+        </div>
+      )}
 
       <div style={{ flex: 1 }} />
 
+      {/* stats */}
+      <StatsBar tickets={tickets} nowMs={nowMs} staleHours={staleHours} accentHue={accentHue} />
+
       {/* current user + logout */}
       {user && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          <div style={{ width: 1, height: 18, background: 'var(--border)', flexShrink: 0 }} />
           <div style={{
             width: 26, height: 26, borderRadius: '50%',
             background: `oklch(55% 0.18 ${user.id % 360})`,
@@ -262,10 +185,10 @@ export function TopBar({
             fontSize: 10, fontWeight: 700, color: '#fff',
             flexShrink: 0,
           }}>
-            {user.name.slice(0, 2).toUpperCase()}
+            {user.name.split(' ').map((p: string) => p[0]).join('').toUpperCase().slice(0, 2)}
           </div>
-          <span style={{ fontSize: 12, color: 'var(--text-dim)', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {user.name}
+          <span style={{ fontSize: 12, color: 'var(--text-dim)', maxWidth: 110, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {user.name.split(' ')[0]}
           </span>
           <button
             onClick={logout}
@@ -275,7 +198,6 @@ export function TopBar({
               background: 'transparent', color: 'var(--text-mute)',
               border: '1px solid var(--border)', cursor: 'pointer',
               fontSize: 11, fontFamily: 'inherit',
-              transition: 'color 0.15s, border-color 0.15s',
             }}
             onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--danger)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--danger)'; }}
             onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-mute)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border)'; }}
@@ -285,28 +207,13 @@ export function TopBar({
         </div>
       )}
 
-      {showBurst && (
-        <BurstMeter tickets={tickets} nowMs={nowMs} staleHours={staleHours} />
-      )}
-
-      <button onClick={onBurst} style={{
-        padding: '7px 12px', borderRadius: 5,
-        background: 'var(--accent)', color: 'var(--accent-ink)',
-        border: 'none', cursor: 'pointer',
-        fontWeight: 600, fontSize: 11, letterSpacing: 0.4,
-        textTransform: 'uppercase',
-        display: 'inline-flex', alignItems: 'center', gap: 5,
-        fontFamily: 'inherit',
-      }}>
-        <IconPlus size={12} /> Simulate burst
-      </button>
-
       <button onClick={onToggleColConfig} title="Configure columns" style={{
         padding: 7, borderRadius: 5,
         background: colConfigActive ? 'var(--accent-soft)' : 'transparent',
         color: colConfigActive ? 'var(--accent)' : 'var(--text-dim)',
         border: `1px solid ${colConfigActive ? 'var(--accent)' : 'var(--border)'}`,
         cursor: 'pointer', display: 'inline-flex', alignItems: 'center',
+        flexShrink: 0,
       }}>
         <IconColumns size={13} />
       </button>
@@ -317,6 +224,7 @@ export function TopBar({
         border: '1px solid var(--border)', cursor: isRefreshing ? 'default' : 'pointer',
         display: 'inline-flex', alignItems: 'center',
         opacity: isRefreshing ? 0.6 : 1,
+        flexShrink: 0,
       }}>
         <IconRefresh size={13} style={{
           animation: isRefreshing ? 'spin 0.8s linear infinite' : 'none',
@@ -324,7 +232,7 @@ export function TopBar({
       </button>
 
       {/* preferences gear */}
-      <div style={{ position: 'relative' }}>
+      <div style={{ position: 'relative', flexShrink: 0 }}>
         <button
           onClick={() => setShowPrefs(v => !v)}
           title="Preferences"

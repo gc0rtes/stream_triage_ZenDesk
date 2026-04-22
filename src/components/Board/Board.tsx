@@ -17,7 +17,6 @@ function sortTickets(tickets: Ticket[], mode: SortMode): Ticket[] {
     return s.sort((a, b) => (b.lastRequesterReplyAt ?? 0) - (a.lastRequesterReplyAt ?? 0));
   if (mode === 'agent')
     return s.sort((a, b) => (a.lastAgentReplyAt ?? Number.MAX_SAFE_INTEGER) - (b.lastAgentReplyAt ?? Number.MAX_SAFE_INTEGER));
-  // newest (default)
   return s.sort((a, b) => b.updatedAt - a.updatedAt);
 }
 
@@ -76,16 +75,6 @@ function applyDrop(t: Ticket, colKey: ColumnKey, staleHours: number): Ticket {
   return n;
 }
 
-const BURST_SAMPLES: Array<{ subject: string; customer: string; tier: 'pro' | 'free' }> = [
-  { subject: 'Getting 401 on first request after key rotation', customer: 'Flux & Field', tier: 'pro' },
-  { subject: 'Docs search returns zero results for "rate limit"', customer: 'Sola Interiors', tier: 'free' },
-  { subject: 'Can we bump plan quota for the weekend?', customer: 'Motorhaus', tier: 'pro' },
-  { subject: 'Trial ended early — please check billing', customer: 'Greenline Co', tier: 'free' },
-  { subject: 'Notifications doubled after deploy', customer: 'Junie Apparel', tier: 'pro' },
-];
-
-const ASSIGNEE_CYCLE = ['MK', 'JR', 'SL', 'AB'] as const;
-
 interface ViewingBannerProps {
   agentId: number;
   colleagues: import('../../api/tickets').ZDAgent[];
@@ -126,7 +115,6 @@ export default function Board() {
   const queryClient = useQueryClient();
   const nowMs = useNow();
 
-  const [burstTickets, setBurstTickets] = useState<Ticket[]>([]);
   const [selected, setSelected] = useState<Ticket | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [showColConfig, setShowColConfig] = useState(false);
@@ -146,7 +134,6 @@ export default function Board() {
     staleHours: 48,
     cardVariant: 'rail',
     columnWidth: 'wide',
-    showBurst: true,
   });
 
   useEffect(() => {
@@ -177,20 +164,11 @@ export default function Board() {
       queryClient.setQueryData<Ticket[]>(ticketsQueryKey, ts =>
         ts?.map(t => t.status !== 'open' ? t : { ...t, updatedAt: t.updatedAt - 120_000 }) ?? []
       );
-      setBurstTickets(ts =>
-        ts.map(t => t.status !== 'open' ? t : { ...t, updatedAt: t.updatedAt - 120_000 })
-      );
     }, 60_000);
     return () => clearInterval(id);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queryClient, viewedAgentId]);
+  }, [queryClient, ticketsQueryKey]);
 
-  const allTickets = useMemo(
-    () => [...burstTickets, ...serverTickets],
-    [burstTickets, serverTickets],
-  );
-
-  const visible = useMemo(() => allTickets.filter(t => {
+  const visible = useMemo(() => serverTickets.filter(t => {
     if (query) {
       const q = query.toLowerCase();
       if (!(`${t.id}`.includes(q) ||
@@ -200,7 +178,7 @@ export default function Board() {
     }
     if (tierFilter.size && !tierFilter.has(t.tier)) return false;
     return true;
-  }), [allTickets, query, tierFilter]);
+  }), [serverTickets, query, tierFilter]);
 
   const byColumn = useMemo(() => {
     const cols: Record<string, Ticket[]> = {};
@@ -216,47 +194,15 @@ export default function Board() {
   }, [visible, nowMs, tweaks.staleHours, columnSorts]);
 
   const onDrop = useCallback((id: number, colKey: ColumnKey) => {
-    const isBurst = burstTickets.some(t => t.id === id);
-    if (isBurst) {
-      setBurstTickets(ts =>
-        ts.map(t => t.id !== id ? t : applyDrop(t, colKey, tweaks.staleHours))
-      );
-      return;
-    }
     const current = queryClient.getQueryData<Ticket[]>(ticketsQueryKey)?.find(t => t.id === id);
     if (!current) return;
     const updated = applyDrop(current, colKey, tweaks.staleHours);
     mutation.mutate({ id, patch: updated });
-  }, [burstTickets, queryClient, mutation, tweaks.staleHours, ticketsQueryKey]);
-
-  const simulateBurst = useCallback(() => {
-    const newTickets: Ticket[] = BURST_SAMPLES.map((s, i) => ({
-      ...s,
-      id: 48300 + Math.floor(Math.random() * 100) + i,
-      status: 'open',
-      tags: ['burst'],
-      updatedAt: Date.now() - i * 60_000,
-      replies: 0,
-      sentiment: 'neutral',
-      assignee: ASSIGNEE_CYCLE[i % 4],
-      linear: null,
-      holdType: null,
-      requesterName: null,
-      requesterEmail: null,
-    lastRequesterReplyAt: null,
-    lastAgentReplyAt: null,
-    }));
-    setBurstTickets(ts => [...newTickets, ...ts]);
-  }, []);
+  }, [queryClient, mutation, tweaks.staleHours, ticketsQueryKey]);
 
   const handleRefresh = useCallback(() => {
     void refetch();
   }, [refetch]);
-
-  const reset = useCallback(() => {
-    setBurstTickets([]);
-    void queryClient.invalidateQueries({ queryKey: ['tickets'] });
-  }, [queryClient]);
 
   const toggleHidden = useCallback((key: ColumnKey) => {
     setHiddenColumns(prev => {
@@ -297,16 +243,14 @@ export default function Board() {
         setQuery={setQuery}
         tierFilter={tierFilter}
         setTierFilter={setTierFilter}
-        onBurst={simulateBurst}
-        onReset={reset}
         onRefresh={handleRefresh}
         isRefreshing={isFetching}
         onToggleColConfig={() => setShowColConfig(v => !v)}
         colConfigActive={showColConfig}
-        tickets={allTickets}
+        tickets={serverTickets}
         nowMs={nowMs}
         staleHours={tweaks.staleHours}
-        showBurst={tweaks.showBurst}
+        accentHue={accentHue}
         theme={tweaks.theme}
         onThemeChange={handleThemeChange}
       />

@@ -9,7 +9,6 @@ export interface Tweaks {
   staleHours: number;
   cardVariant: string;
   columnWidth: string;
-  showBurst: boolean;
 }
 
 interface RowProps { label: string; children: ReactNode }
@@ -129,23 +128,6 @@ export function TweaksPanel({ tweaks, setTweaks, visible }: TweaksPanelProps) {
         />
       </Row>
 
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        paddingTop: 8, borderTop: '1px solid var(--border)',
-      }}>
-        <span style={{ color: 'var(--text-dim)', fontSize: 11 }}>Show burst meter</span>
-        <button onClick={() => set('showBurst', !tweaks.showBurst)} style={{
-          width: 32, height: 18, borderRadius: 10, position: 'relative',
-          background: tweaks.showBurst ? 'var(--accent)' : 'var(--border-strong)',
-          border: 'none', cursor: 'pointer', padding: 0,
-        }}>
-          <div style={{
-            position: 'absolute', top: 2, left: tweaks.showBurst ? 16 : 2,
-            width: 14, height: 14, borderRadius: '50%',
-            background: 'var(--bg)', transition: 'left 0.15s',
-          }} />
-        </button>
-      </div>
     </div>
   );
 }

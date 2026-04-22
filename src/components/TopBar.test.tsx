@@ -37,8 +37,6 @@ const defaultProps = {
   setQuery: vi.fn(),
   tierFilter: new Set<string>(),
   setTierFilter: vi.fn(),
-  onBurst: vi.fn(),
-  onReset: vi.fn(),
   onRefresh: vi.fn(),
   isRefreshing: false,
   onToggleColConfig: vi.fn(),
@@ -46,7 +44,7 @@ const defaultProps = {
   tickets: [makeTicket(1), makeTicket(2)],
   nowMs: NOW,
   staleHours: 48,
-  showBurst: true,
+  accentHue: 145,
   theme: 'warm-coal',
   onThemeChange: vi.fn(),
 };
