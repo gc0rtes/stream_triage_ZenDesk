@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import type { Ticket } from '../types/ticket';
-import { TIER_META, ASSIGNEES } from '../data/columns';
+import { TIER_META } from '../data/columns';
 import { THEMES } from '../theme';
 import type { ThemeKey } from '../theme';
-import { AssigneeChip } from './Board/TicketCard';
 import {
   IconSearch, IconX, IconPlus, IconRefresh, IconColumns, IconGear, IconCheck,
 } from './icons';
+import { useAuth } from '../context/AuthContext';
+import type { ZDAgent } from '../api/tickets';
 
 interface BurstMeterProps {
   tickets: Ticket[];
@@ -90,6 +91,37 @@ export function BurstMeter({ tickets, nowMs, staleHours }: BurstMeterProps) {
   );
 }
 
+interface ColleagueChipProps {
+  agent: ZDAgent;
+  active: boolean;
+  onToggle: () => void;
+}
+
+function ColleagueChip({ agent, active, onToggle }: ColleagueChipProps) {
+  const initials = agent.name.slice(0, 2).toUpperCase();
+  const hue = agent.id % 360;
+  return (
+    <button
+      onClick={onToggle}
+      title={agent.name}
+      style={{
+        width: 26, height: 26, borderRadius: '50%', padding: 0,
+        border: active ? `2px solid oklch(60% 0.18 ${hue})` : '2px solid transparent',
+        background: `oklch(${active ? '55%' : '40%'} 0.14 ${hue})`,
+        color: '#fff',
+        fontSize: 9, fontWeight: 700,
+        cursor: 'pointer',
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        opacity: active ? 1 : 0.7,
+        transition: 'opacity 0.15s, border-color 0.15s, background 0.15s',
+        flexShrink: 0,
+      }}
+    >
+      {initials}
+    </button>
+  );
+}
+
 interface FilterChipProps {
   active: boolean;
   onClick: () => void;
@@ -116,8 +148,6 @@ interface TopBarProps {
   setQuery: (q: string) => void;
   tierFilter: Set<string>;
   setTierFilter: (s: Set<string>) => void;
-  assigneeFilter: Set<string>;
-  setAssigneeFilter: (s: Set<string>) => void;
   onBurst: () => void;
   onReset: () => void;
   onRefresh: () => void;
@@ -135,12 +165,12 @@ interface TopBarProps {
 export function TopBar({
   query, setQuery,
   tierFilter, setTierFilter,
-  assigneeFilter, setAssigneeFilter,
   onBurst, onRefresh, isRefreshing, onToggleColConfig, colConfigActive,
   tickets, nowMs, staleHours, showBurst,
   theme, onThemeChange,
 }: TopBarProps) {
   const [showPrefs, setShowPrefs] = useState(false);
+  const { user, colleagues, viewedAgentId, setViewedAgentId, logout } = useAuth();
 
   return (
     <div style={{
@@ -208,29 +238,52 @@ export function TopBar({
         ))}
       </div>
 
-      {/* assignee filters */}
+      {/* colleague chips — click to view their board */}
       <div style={{ display: 'flex', gap: 4 }}>
-        {Object.keys(ASSIGNEES).map(id => (
-          <button
-            key={id}
-            onClick={() => {
-              const n = new Set(assigneeFilter);
-              if (n.has(id)) { n.delete(id); } else { n.add(id); }
-              setAssigneeFilter(n);
-            }}
-            style={{
-              padding: 0, border: 'none', background: 'transparent',
-              cursor: 'pointer',
-              opacity: assigneeFilter.size === 0 || assigneeFilter.has(id) ? 1 : 0.3,
-              transition: 'opacity 0.15s',
-            }}
-          >
-            <AssigneeChip id={id} size={22} />
-          </button>
+        {colleagues.map(agent => (
+          <ColleagueChip
+            key={agent.id}
+            agent={agent}
+            active={viewedAgentId === agent.id}
+            onToggle={() => setViewedAgentId(viewedAgentId === agent.id ? null : agent.id)}
+          />
         ))}
       </div>
 
       <div style={{ flex: 1 }} />
+
+      {/* current user + logout */}
+      {user && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{
+            width: 26, height: 26, borderRadius: '50%',
+            background: `oklch(55% 0.18 ${user.id % 360})`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 10, fontWeight: 700, color: '#fff',
+            flexShrink: 0,
+          }}>
+            {user.name.slice(0, 2).toUpperCase()}
+          </div>
+          <span style={{ fontSize: 12, color: 'var(--text-dim)', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {user.name}
+          </span>
+          <button
+            onClick={logout}
+            title="Sign out"
+            style={{
+              padding: '4px 8px', borderRadius: 4,
+              background: 'transparent', color: 'var(--text-mute)',
+              border: '1px solid var(--border)', cursor: 'pointer',
+              fontSize: 11, fontFamily: 'inherit',
+              transition: 'color 0.15s, border-color 0.15s',
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--danger)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--danger)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-mute)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border)'; }}
+          >
+            Logout
+          </button>
+        </div>
+      )}
 
       {showBurst && (
         <BurstMeter tickets={tickets} nowMs={nowMs} staleHours={staleHours} />

@@ -17,6 +17,11 @@ export interface CustomFieldValue {
 
 export const MY_ASSIGNEE_ID = 1515461428242;
 
+export function getMyAssigneeId(): number {
+  const id = localStorage.getItem('zd-user-id')
+  return id ? Number(id) : MY_ASSIGNEE_ID
+}
+
 interface RawZDTicket {
   id: number;
   subject: string;
@@ -114,7 +119,7 @@ function mapZDTicket(t: RawZDTicket, maps: SideloadMaps = { userMap: {}, orgMap:
     replies: 0,
     sentiment: null,
     assignee:
-      t.assignee_id === MY_ASSIGNEE_ID ? "GC" : t.assignee_id ? "OTHER" : "",
+      t.assignee_id === getMyAssigneeId() ? "GC" : t.assignee_id ? "OTHER" : "",
     linear: null,
     customer: t.organization_id
       ? (maps.orgMap[t.organization_id] ?? "Org-" + String(t.organization_id).slice(-5))
@@ -169,11 +174,12 @@ async function fetchNameMaps(rawTickets: RawZDTicket[]): Promise<SideloadMaps> {
   };
 }
 
-export async function fetchTickets(): Promise<Ticket[]> {
+export async function fetchTickets(agentId?: number): Promise<Ticket[]> {
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 3600_000)
     .toISOString()
     .split("T")[0];
-  const me = `assignee_id:${MY_ASSIGNEE_ID}`;
+  const targetId = agentId ?? getMyAssigneeId();
+  const me = `assignee_id:${targetId}`;
 
   const [myOpen, myPending, myHold, myNew, unassigned, mySolved] =
     await Promise.all([
@@ -219,7 +225,7 @@ export async function assignTicket(id: number): Promise<Ticket> {
   const data = await zdFetch<{ ticket: Ticket }>(`/tickets/${id}.json`, {
     method: "PUT",
     body: JSON.stringify({
-      ticket: { assignee_id: MY_ASSIGNEE_ID, status: "open" },
+      ticket: { assignee_id: getMyAssigneeId(), status: "open" },
     }),
   });
   return data.ticket;
@@ -404,6 +410,31 @@ export async function fetchAgents(): Promise<ZDAgent[]> {
     seen.add(u.id);
     return true;
   });
+}
+
+export async function searchZDUserByEmail(email: string): Promise<ZDAgent | null> {
+  const data = await zdFetch<{ users: ZDAgent[] }>(
+    `/users/search.json?${new URLSearchParams({ query: email })}`
+  )
+  return data.users[0] ?? null
+}
+
+export async function fetchGroupAgents(): Promise<ZDAgent[]> {
+  try {
+    const { groups } = await zdFetch<{ groups: Array<{ id: number; name: string }> }>("/groups.json")
+    const csGroup = groups.find((g) =>
+      g.name.toLowerCase().includes("customer success")
+    )
+    if (csGroup) {
+      const { users } = await zdFetch<{ users: ZDAgent[] }>(
+        `/users.json?group_id=${csGroup.id}&per_page=100`
+      )
+      return users
+    }
+  } catch {
+    // fall through to fetchAgents
+  }
+  return fetchAgents()
 }
 
 export async function reassignTicket(

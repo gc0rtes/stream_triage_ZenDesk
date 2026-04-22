@@ -14,7 +14,7 @@ import { usePostReply } from '../hooks/usePostReply'
 import { useMacros } from '../hooks/useMacros'
 import { useFormFields } from '../hooks/useFormFields'
 import { useAgents } from '../hooks/useAgents'
-import { MY_ASSIGNEE_ID, uploadAttachment } from '../api/tickets'
+import { getMyAssigneeId, uploadAttachment } from '../api/tickets'
 import { useQueryClient } from '@tanstack/react-query'
 import { useToast } from './Toast'
 import { RequesterPanel } from './RequesterPanel'
@@ -481,7 +481,7 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
     for (const c of full.comments) {
       if (!c.public) continue
       const ts = new Date(c.created_at).getTime()
-      if (c.author_id !== MY_ASSIGNEE_ID) {
+      if (c.author_id !== getMyAssigneeId()) {
         if (!lastRequesterReplyAt || ts > lastRequesterReplyAt) lastRequesterReplyAt = ts
       } else {
         if (!lastAgentReplyAt || ts > lastAgentReplyAt) lastAgentReplyAt = ts
@@ -692,7 +692,7 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
           {isLoading && <div style={{ color: 'var(--text-mute)', fontSize: 12, textAlign: 'center', padding: 24 }}>Loading conversation…</div>}
           {!isLoading && comments.length === 0 && <div style={{ color: 'var(--text-mute)', fontSize: 12, textAlign: 'center', padding: 24 }}>No messages yet.</div>}
           {comments.map(c => {
-            const isMe = c.author_id === MY_ASSIGNEE_ID
+            const isMe = c.author_id === getMyAssigneeId()
             const isRequester = full?.requester_id != null && c.author_id === full.requester_id
             const isInternal = !c.public
             const isOtherAgent = !isMe && !isRequester

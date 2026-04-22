@@ -1,7 +1,9 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { TopBar } from './TopBar';
+import { AuthProvider } from '../context/AuthContext';
 import type { Ticket } from '../types/ticket';
+import type { ReactNode } from 'react';
 
 const NOW = Date.now();
 
@@ -26,13 +28,15 @@ function makeTicket(id: number): Ticket {
   };
 }
 
+function Wrapper({ children }: { children: ReactNode }) {
+  return <AuthProvider>{children}</AuthProvider>;
+}
+
 const defaultProps = {
   query: '',
   setQuery: vi.fn(),
   tierFilter: new Set<string>(),
   setTierFilter: vi.fn(),
-  assigneeFilter: new Set<string>(),
-  setAssigneeFilter: vi.fn(),
   onBurst: vi.fn(),
   onReset: vi.fn(),
   onRefresh: vi.fn(),
@@ -50,7 +54,7 @@ const defaultProps = {
 describe('TopBar', () => {
   it('calls setQuery when typing in search input', () => {
     const setQuery = vi.fn();
-    render(<TopBar {...defaultProps} setQuery={setQuery} />);
+    render(<TopBar {...defaultProps} setQuery={setQuery} />, { wrapper: Wrapper });
 
     const input = screen.getByPlaceholderText('Search tickets, customers, tags');
     fireEvent.change(input, { target: { value: 'hello' } });
@@ -59,12 +63,12 @@ describe('TopBar', () => {
   });
 
   it('renders logo text', () => {
-    render(<TopBar {...defaultProps} />);
+    render(<TopBar {...defaultProps} />, { wrapper: Wrapper });
     expect(screen.getByText('Triage')).toBeTruthy();
   });
 
   it('renders tier filter buttons', () => {
-    render(<TopBar {...defaultProps} />);
+    render(<TopBar {...defaultProps} />, { wrapper: Wrapper });
     expect(screen.getByText('ENT')).toBeTruthy();
     expect(screen.getByText('PRO')).toBeTruthy();
     expect(screen.getByText('FREE')).toBeTruthy();

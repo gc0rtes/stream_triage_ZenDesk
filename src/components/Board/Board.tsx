@@ -3,6 +3,7 @@ export type SortMode = 'newest' | 'oldest' | 'tier' | 'requester' | 'agent';
 import type { CSSProperties } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Ticket, ColumnKey } from '../../types/ticket';
+import { useAuth } from '../../context/AuthContext';
 
 const TIER_ORDER: Record<string, number> = { enterprise: 0, pro: 1, free: 2 };
 
@@ -85,10 +86,42 @@ const BURST_SAMPLES: Array<{ subject: string; customer: string; tier: 'pro' | 'f
 
 const ASSIGNEE_CYCLE = ['MK', 'JR', 'SL', 'AB'] as const;
 
+interface ViewingBannerProps {
+  agentId: number;
+  colleagues: import('../../api/tickets').ZDAgent[];
+}
+
+function ViewingBanner({ agentId, colleagues }: ViewingBannerProps) {
+  const agent = colleagues.find(a => a.id === agentId);
+  const name = agent?.name ?? `Agent ${agentId}`;
+  return (
+    <div style={{
+      background: 'var(--accent-soft)',
+      borderBottom: '1px solid var(--accent)',
+      padding: '6px 18px',
+      fontSize: 12,
+      color: 'var(--accent)',
+      fontWeight: 500,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 6,
+    }}>
+      <span>Viewing <strong>{name}</strong>'s board</span>
+      <span style={{ color: 'var(--text-mute)' }}>—</span>
+      <span style={{ color: 'var(--text-dim)' }}>replies post as you</span>
+    </div>
+  );
+}
+
 export default function Board() {
-  const { data: serverTickets = [], isFetching, refetch } = useTickets();
+  const { viewedAgentId, colleagues } = useAuth();
+  const { data: serverTickets = [], isFetching, refetch } = useTickets(viewedAgentId ?? undefined);
   useIncrementalSync();
-  const mutation = useUpdateTicket();
+  const ticketsQueryKey = useMemo(
+    () => ['tickets', viewedAgentId ?? 'self'] as const,
+    [viewedAgentId]
+  );
+  const mutation = useUpdateTicket(ticketsQueryKey);
   const assignMutation = useAssignTicket();
   const queryClient = useQueryClient();
   const nowMs = useNow();
@@ -105,7 +138,6 @@ export default function Board() {
   );
   const [query, setQuery] = useState('');
   const [tierFilter, setTierFilter] = useState<Set<string>>(new Set());
-  const [assigneeFilter, setAssigneeFilter] = useState<Set<string>>(new Set());
   const [columnSorts, setColumnSorts] = useState<Record<ColumnKey, SortMode>>(DEFAULT_COL_SORT);
   const [tweaks, setTweaks] = useState<Tweaks>({
     accent: 'green',
@@ -142,7 +174,7 @@ export default function Board() {
   // Artificial aging: nudge open ticket timestamps back 2 min every 60s
   useEffect(() => {
     const id = setInterval(() => {
-      queryClient.setQueryData<Ticket[]>(['tickets'], ts =>
+      queryClient.setQueryData<Ticket[]>(ticketsQueryKey, ts =>
         ts?.map(t => t.status !== 'open' ? t : { ...t, updatedAt: t.updatedAt - 120_000 }) ?? []
       );
       setBurstTickets(ts =>
@@ -150,7 +182,8 @@ export default function Board() {
       );
     }, 60_000);
     return () => clearInterval(id);
-  }, [queryClient]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queryClient, viewedAgentId]);
 
   const allTickets = useMemo(
     () => [...burstTickets, ...serverTickets],
@@ -166,9 +199,8 @@ export default function Board() {
             t.tags.some(tag => tag.toLowerCase().includes(q)))) return false;
     }
     if (tierFilter.size && !tierFilter.has(t.tier)) return false;
-    if (assigneeFilter.size && !assigneeFilter.has(t.assignee)) return false;
     return true;
-  }), [allTickets, query, tierFilter, assigneeFilter]);
+  }), [allTickets, query, tierFilter]);
 
   const byColumn = useMemo(() => {
     const cols: Record<string, Ticket[]> = {};
@@ -191,11 +223,11 @@ export default function Board() {
       );
       return;
     }
-    const current = queryClient.getQueryData<Ticket[]>(['tickets'])?.find(t => t.id === id);
+    const current = queryClient.getQueryData<Ticket[]>(ticketsQueryKey)?.find(t => t.id === id);
     if (!current) return;
     const updated = applyDrop(current, colKey, tweaks.staleHours);
     mutation.mutate({ id, patch: updated });
-  }, [burstTickets, queryClient, mutation, tweaks.staleHours]);
+  }, [burstTickets, queryClient, mutation, tweaks.staleHours, ticketsQueryKey]);
 
   const simulateBurst = useCallback(() => {
     const newTickets: Ticket[] = BURST_SAMPLES.map((s, i) => ({
@@ -265,8 +297,6 @@ export default function Board() {
         setQuery={setQuery}
         tierFilter={tierFilter}
         setTierFilter={setTierFilter}
-        assigneeFilter={assigneeFilter}
-        setAssigneeFilter={setAssigneeFilter}
         onBurst={simulateBurst}
         onReset={reset}
         onRefresh={handleRefresh}
@@ -280,6 +310,9 @@ export default function Board() {
         theme={tweaks.theme}
         onThemeChange={handleThemeChange}
       />
+      {viewedAgentId != null && (
+        <ViewingBanner agentId={viewedAgentId} colleagues={colleagues} />
+      )}
       <div style={{ position: 'relative' }}>
         {showColConfig && (
           <>

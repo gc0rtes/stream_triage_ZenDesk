@@ -1,7 +1,19 @@
-import Board from './components/Board/Board';
+import { AuthProvider, useAuth } from './context/AuthContext'
+import Board from './components/Board/Board'
+import { LoginScreen } from './components/LoginScreen'
 
-function App() {
-  return <Board />;
+function AppInner() {
+  const { user } = useAuth()
+  if (user === null) return <LoginScreen />
+  return <Board />
 }
 
-export default App;
+function App() {
+  return (
+    <AuthProvider>
+      <AppInner />
+    </AuthProvider>
+  )
+}
+
+export default App

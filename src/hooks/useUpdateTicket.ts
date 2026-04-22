@@ -3,7 +3,7 @@ import type { Ticket } from '../types/ticket'
 import { updateTicketStatus } from '../api/tickets'
 import { pendingMutationIds } from './pendingMutations'
 
-export function useUpdateTicket() {
+export function useUpdateTicket(ticketsQueryKey: readonly unknown[] = ['tickets', 'self']) {
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -12,10 +12,10 @@ export function useUpdateTicket() {
 
     onMutate: async ({ id, patch }) => {
       pendingMutationIds.add(id)
-      await queryClient.cancelQueries({ queryKey: ['tickets'] })
-      const snapshot = queryClient.getQueryData<Ticket[]>(['tickets'])
+      await queryClient.cancelQueries({ queryKey: ticketsQueryKey })
+      const snapshot = queryClient.getQueryData<Ticket[]>(ticketsQueryKey)
 
-      queryClient.setQueryData<Ticket[]>(['tickets'], (prev) =>
+      queryClient.setQueryData<Ticket[]>(ticketsQueryKey, (prev) =>
         prev?.map((t) => (t.id === id ? { ...t, ...patch } : t)),
       )
 
@@ -25,7 +25,7 @@ export function useUpdateTicket() {
     onError: (_err, vars, ctx) => {
       pendingMutationIds.delete(vars.id)
       if (ctx?.snapshot) {
-        queryClient.setQueryData(['tickets'], ctx.snapshot)
+        queryClient.setQueryData(ticketsQueryKey, ctx.snapshot)
       }
     },
 

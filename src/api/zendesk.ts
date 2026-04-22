@@ -2,7 +2,6 @@
 // In prod, requests go directly to the ZD subdomain using Basic Auth.
 const IS_DEV = import.meta.env.DEV
 
-const ZD_EMAIL = import.meta.env.VITE_ZD_EMAIL ?? ''
 const ZD_TOKEN = import.meta.env.VITE_ZD_TOKEN ?? ''
 const ZD_SUBDOMAIN = import.meta.env.VITE_ZD_SUBDOMAIN ?? 'getstream'
 
@@ -10,15 +9,22 @@ const BASE_URL = IS_DEV
   ? '/api/v2'
   : `https://${ZD_SUBDOMAIN}.zendesk.com/api/v2`
 
-const AUTH_HEADER =
-  !IS_DEV && ZD_EMAIL && ZD_TOKEN
-    ? `Basic ${btoa(`${ZD_EMAIL}/token:${ZD_TOKEN}`)}`
-    : undefined
+function getAuthHeader(): string | undefined {
+  if (IS_DEV) return undefined
+  // Auth email resolved at request time: prefer logged-in user, fall back to env
+  const email =
+    localStorage.getItem('zd-user-email') ??
+    (import.meta.env.VITE_ZD_EMAIL as string | undefined) ??
+    ''
+  if (!email || !ZD_TOKEN) return undefined
+  return `Basic ${btoa(`${email}/token:${ZD_TOKEN}`)}`
+}
 
 export async function zdFetch<T>(path: string, options?: RequestInit): Promise<T> {
+  const authHeader = getAuthHeader()
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...(AUTH_HEADER ? { Authorization: AUTH_HEADER } : {}),
+    ...(authHeader ? { Authorization: authHeader } : {}),
     ...(options?.headers as Record<string, string> | undefined),
   }
 

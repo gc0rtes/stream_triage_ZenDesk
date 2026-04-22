@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { FullTicket } from '../api/tickets'
-import { submitReply, MY_ASSIGNEE_ID } from '../api/tickets'
+import { submitReply, getMyAssigneeId } from '../api/tickets'
 
 export function usePostReply(ticketId: number | null) {
   const queryClient = useQueryClient()
@@ -18,8 +18,8 @@ export function usePostReply(ticketId: number | null) {
             ...old,
             comments: [...old.comments, {
               id: Date.now(),
-              author_id: MY_ASSIGNEE_ID,
-              author_name: 'Guilherme Cortes',
+              author_id: getMyAssigneeId(),
+              author_name: localStorage.getItem('zd-user-name') ?? 'Me',
               body: body ?? '',
               html_body: htmlBody,
               public: isPublic ?? true,
