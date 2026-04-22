@@ -6,7 +6,7 @@ export function usePostReply(ticketId: number | null) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (vars: { body?: string; htmlBody?: string; isPublic?: boolean; status?: string; uploads?: string[]; assigneeId?: number | null; customFields?: Array<{ id: number; value: string | string[] | boolean | null }> }) =>
+    mutationFn: (vars: { body?: string; htmlBody?: string; isPublic?: boolean; status?: string; uploads?: string[]; assigneeId?: number | null; customFields?: Array<{ id: number; value: string | string[] | boolean | null }>; ccEmails?: string[] }) =>
       submitReply(ticketId!, vars),
     onMutate: async ({ body, htmlBody, isPublic }) => {
       await queryClient.cancelQueries({ queryKey: ['ticket', ticketId] })

@@ -1,5 +1,5 @@
-import { useState, forwardRef, useImperativeHandle } from 'react'
-import { useEditor, EditorContent } from '@tiptap/react'
+import { useState, useRef, forwardRef, useImperativeHandle, useCallback } from 'react'
+import { useEditor, EditorContent, NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
 import Link from '@tiptap/extension-link'
@@ -7,7 +7,10 @@ import Placeholder from '@tiptap/extension-placeholder'
 import { TextStyle } from '@tiptap/extension-text-style'
 import Color from '@tiptap/extension-color'
 import { TableKit } from '@tiptap/extension-table'
+import Image from '@tiptap/extension-image'
+import { Extension } from '@tiptap/core'
 import type { Editor } from '@tiptap/react'
+import { uploadAttachmentFull } from '../api/tickets'
 import {
   IconBold, IconItalic, IconUnderline, IconStrikethrough,
   IconList, IconListOrdered, IconBlockquote, IconCode, IconTerminal,
@@ -24,6 +27,176 @@ interface RichTextEditorProps {
   placeholder?: string
   isPublic?: boolean
   onKeyboardSubmit?: () => void
+  onDropAttachment?: (file: File) => void
+  editorHeight?: number
+}
+
+// Ctrl+Shift+5 → inline code, Ctrl+Shift+6 → code block
+const CodeShortcuts = Extension.create({
+  name: 'codeShortcuts',
+  addKeyboardShortcuts() {
+    return {
+      'Ctrl-Shift-5': () => this.editor.chain().focus().toggleCode().run(),
+      'Ctrl-Shift-6': () => this.editor.chain().focus().toggleCodeBlock().run(),
+    }
+  },
+})
+
+// ── Inline image resize node view ────────────────────────────────────────────
+
+const CORNERS = ['nw', 'ne', 'sw', 'se'] as const
+type Corner = typeof CORNERS[number]
+
+function ImageResizeView({ node, updateAttributes, selected }: {
+  node: { attrs: Record<string, unknown> }
+  updateAttributes: (attrs: Record<string, unknown>) => void
+  selected: boolean
+}) {
+  const imgRef = useRef<HTMLImageElement>(null)
+
+  const startResize = (e: React.MouseEvent, corner: Corner) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const el = imgRef.current
+    if (!el) return
+
+    const startX = e.clientX
+    const startW = el.offsetWidth || (node.attrs.width as number) || 200
+    const startH = el.offsetHeight || (node.attrs.height as number) || 150
+    const aspect = startW / startH
+    const goesRight = corner === 'ne' || corner === 'se'
+
+    const onMove = (ev: MouseEvent) => {
+      const dx = ev.clientX - startX
+      const newW = Math.max(40, startW + (goesRight ? dx : -dx))
+      updateAttributes({ width: Math.round(newW), height: Math.round(newW / aspect) })
+    }
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+      document.body.style.userSelect = ''
+      document.body.style.cursor = ''
+    }
+
+    document.body.style.userSelect = 'none'
+    document.body.style.cursor = `${corner}-resize`
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }
+
+  const w = node.attrs.width as number | null
+  const h = node.attrs.height as number | null
+
+  return (
+    <NodeViewWrapper as="span" style={{ display: 'inline-block', position: 'relative', lineHeight: 0, verticalAlign: 'bottom' }}>
+      <img
+        ref={imgRef}
+        src={node.attrs.src as string}
+        alt={(node.attrs.alt as string) ?? ''}
+        width={w ?? undefined}
+        height={h ?? undefined}
+        style={{
+          display: 'block', maxWidth: '100%',
+          outline: selected ? '2px solid var(--accent)' : 'none',
+          outlineOffset: 1,
+        }}
+        draggable={false}
+      />
+      {selected && CORNERS.map(corner => (
+        <div
+          key={corner}
+          onMouseDown={e => startResize(e, corner)}
+          style={{
+            position: 'absolute',
+            ...(corner.startsWith('n') ? { top: -5 } : { bottom: -5 }),
+            ...(corner.endsWith('w') ? { left: -5 } : { right: -5 }),
+            width: 10, height: 10,
+            background: 'var(--accent)', border: '2px solid white',
+            borderRadius: 2, cursor: `${corner}-resize`, zIndex: 10,
+            boxShadow: '0 1px 4px rgba(0,0,0,0.4)',
+          }}
+        />
+      ))}
+    </NodeViewWrapper>
+  )
+}
+
+const ResizableImage = Image.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      width: { default: null, parseHTML: el => el.getAttribute('width') ? Number(el.getAttribute('width')) : null },
+      height: { default: null, parseHTML: el => el.getAttribute('height') ? Number(el.getAttribute('height')) : null },
+    }
+  },
+  addNodeView() {
+    return ReactNodeViewRenderer(ImageResizeView)
+  },
+})
+
+// ── Drop image choice popup ───────────────────────────────────────────────────
+
+interface DropImageMenuProps {
+  file: File
+  uploading: boolean
+  onInline: () => void
+  onAttach: () => void
+  onCancel: () => void
+}
+
+function DropImageMenu({ file, uploading, onInline, onAttach, onCancel }: DropImageMenuProps) {
+  return (
+    <div style={{
+      position: 'absolute', inset: 0, zIndex: 20, borderRadius: 6,
+      background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(3px)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      <div style={{
+        background: 'var(--surface)', border: '1px solid var(--border)',
+        borderRadius: 8, padding: '16px 18px',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.45)',
+        display: 'flex', flexDirection: 'column', gap: 10, minWidth: 230,
+      }}>
+        <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 14 }}>🖼</span>
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 170 }}>{file.name}</span>
+        </div>
+        <div style={{ fontSize: 11, color: 'var(--text-mute)' }}>How do you want to add this image?</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 2 }}>
+          <button
+            onClick={onInline}
+            disabled={uploading}
+            style={{
+              padding: '8px 12px', borderRadius: 5,
+              background: 'var(--accent)', color: 'var(--accent-ink)',
+              border: 'none', cursor: uploading ? 'default' : 'pointer',
+              fontSize: 12, fontWeight: 600, opacity: uploading ? 0.6 : 1,
+              textAlign: 'left',
+            }}
+          >{uploading ? 'Uploading…' : 'Insert inline in message'}</button>
+          <button
+            onClick={onAttach}
+            disabled={uploading}
+            style={{
+              padding: '8px 12px', borderRadius: 5,
+              background: 'var(--surface-2)', color: 'var(--text)',
+              border: '1px solid var(--border)', cursor: uploading ? 'default' : 'pointer',
+              fontSize: 12, fontWeight: 500, opacity: uploading ? 0.6 : 1,
+              textAlign: 'left',
+            }}
+          >Add as attachment</button>
+        </div>
+        <button
+          onClick={onCancel}
+          disabled={uploading}
+          style={{
+            background: 'transparent', border: 'none', cursor: 'pointer',
+            color: 'var(--text-mute)', fontSize: 11, padding: 0, textAlign: 'center',
+          }}
+        >Cancel</button>
+      </div>
+    </div>
+  )
 }
 
 // ── Toolbar ───────────────────────────────────────────────────────────────────
@@ -252,7 +425,11 @@ function Toolbar({ editor }: ToolbarProps) {
 // ── Main component ─────────────────────────────────────────────────────────────
 
 export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorProps>(
-  function RichTextEditor({ onChange, placeholder, isPublic, onKeyboardSubmit }, ref) {
+  function RichTextEditor({ onChange, placeholder, isPublic, onKeyboardSubmit, onDropAttachment, editorHeight }, ref) {
+    const [dropFile, setDropFile] = useState<File | null>(null)
+    const [uploading, setUploading] = useState(false)
+    const [isDragOver, setIsDragOver] = useState(false)
+
     const editor = useEditor({
       extensions: [
         StarterKit,
@@ -262,6 +439,8 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
         TextStyle,
         Color,
         TableKit,
+        CodeShortcuts,
+        ResizableImage.configure({ inline: true, allowBase64: false }),
       ],
       editorProps: {
         handleKeyDown: (_view, event) => {
@@ -270,6 +449,21 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
             return true
           }
           return false
+        },
+        handleDrop: (_view, event) => {
+          const file = Array.from(event.dataTransfer?.files ?? []).find(f => f.type.startsWith('image/'))
+          if (!file) return false
+          event.preventDefault()
+          setDropFile(file)
+          setIsDragOver(false)
+          return true
+        },
+        handleDOMEvents: {
+          dragover: (_view, event) => {
+            if (event.dataTransfer?.types.includes('Files')) setIsDragOver(true)
+            return false
+          },
+          dragleave: () => { setIsDragOver(false); return false },
         },
       },
       onUpdate: ({ editor: e }) => {
@@ -283,17 +477,59 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       clear: () => { editor?.commands.clearContent(true) },
     }), [editor])
 
+    const insertInline = useCallback(async () => {
+      if (!dropFile || !editor) return
+      setDropFile(null)
+      setUploading(true)
+      try {
+        const { contentUrl } = await uploadAttachmentFull(dropFile)
+        editor.chain().focus().setImage({ src: contentUrl, alt: dropFile.name }).run()
+      } finally {
+        setUploading(false)
+      }
+    }, [dropFile, editor])
+
+    const addAsAttachment = useCallback(() => {
+      if (!dropFile) return
+      onDropAttachment?.(dropFile)
+      setDropFile(null)
+    }, [dropFile, onDropAttachment])
+
     if (!editor) return null
 
+    const borderColor = isDragOver ? 'var(--accent)' : isPublic ? 'var(--border)' : 'var(--warn)'
+
     return (
-      <div style={{
-        border: `1px solid ${isPublic ? 'var(--border)' : 'var(--warn)'}`,
-        borderRadius: 6, background: 'var(--bg-2)', overflow: 'hidden',
-        marginBottom: 8, transition: 'border-color 0.15s',
-      }}>
-        <EditorContent editor={editor} />
-        <Toolbar editor={editor} />
-      </div>
+      <div
+          style={{
+            border: `1px solid ${borderColor}`,
+            borderRadius: 6, background: 'var(--bg-2)', overflow: 'hidden',
+            marginBottom: 8, transition: 'border-color 0.15s',
+            position: 'relative',
+            '--editor-h': editorHeight ? `${editorHeight}px` : undefined,
+          } as React.CSSProperties}
+        >
+          {dropFile && (
+            <DropImageMenu
+              file={dropFile}
+              uploading={uploading}
+              onInline={insertInline}
+              onAttach={addAsAttachment}
+              onCancel={() => setDropFile(null)}
+            />
+          )}
+          {uploading && (
+            <div style={{
+              position: 'absolute', inset: 0, zIndex: 10, borderRadius: 6,
+              background: 'rgba(0,0,0,0.4)', display: 'flex',
+              alignItems: 'center', justifyContent: 'center', gap: 8,
+            }}>
+              <span style={{ fontSize: 12, color: 'white' }}>Uploading image…</span>
+            </div>
+          )}
+          <EditorContent editor={editor} />
+          <Toolbar editor={editor} />
+        </div>
     )
   }
 )

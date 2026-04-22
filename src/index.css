@@ -5,6 +5,12 @@
 * {
   margin: 0;
   padding: 0;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+*:hover {
+  scrollbar-color: var(--border) transparent;
 }
 
 body {
@@ -30,7 +36,7 @@ body {
 }
 
 /* ── Tiptap rich-text editor ─────────────────────────── */
-.tiptap { outline: none; min-height: 90px; font-size: 13px; line-height: 1.6; color: var(--text); padding: 10px 12px; }
+.tiptap { outline: none; height: var(--editor-h, 120px); overflow-y: auto; font-size: 13px; line-height: 1.6; color: var(--text); padding: 10px 12px; }
 .tiptap p { margin-bottom: 4px; }
 .tiptap p.is-editor-empty:first-child::before { content: attr(data-placeholder); color: var(--text-mute); pointer-events: none; float: left; height: 0; }
 .tiptap h1 { font-size: 1.4em; font-weight: 700; margin-bottom: 6px; color: var(--text); }
@@ -68,3 +74,18 @@ body {
 .tiptap-prose th { background: var(--surface-2); font-weight: 600; color: var(--text-dim); }
 .tiptap-prose strong { font-weight: 700; }
 .tiptap-prose em { font-style: italic; }
+.tiptap-prose img { max-width: 100%; height: auto; min-height: 40px; border-radius: 6px; display: block; margin: 6px 0; background: var(--surface-2); }
+
+/* ── Inline image hover overlay ──────────────────────────── */
+.prose-img-wrap { position: relative; display: inline-block; line-height: 0; max-width: 100%; }
+.prose-img-open {
+  position: absolute; top: 8px; right: 8px;
+  background: rgba(0,0,0,0.78); color: #fff; border-radius: 6px;
+  padding: 5px 12px; font-size: 12px; font-weight: 700;
+  text-decoration: none; opacity: 0; pointer-events: none;
+  transition: opacity 0.15s; white-space: nowrap;
+  font-family: system-ui, sans-serif;
+  border: 1px solid rgba(255,255,255,0.25);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+.prose-img-wrap:hover .prose-img-open { opacity: 1; pointer-events: auto; }

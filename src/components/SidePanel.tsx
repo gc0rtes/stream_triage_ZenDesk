@@ -96,6 +96,81 @@ function MacroMenuItem({ title, onClick }: MacroMenuItemProps) {
   )
 }
 
+// ── Email chips input (for CC field) ─────────────────────────────────────────
+
+interface EmailChipsInputProps {
+  emails: string[]
+  input: string
+  onInputChange: (v: string) => void
+  onAdd: (email: string) => void
+  onRemove: (email: string) => void
+}
+
+function EmailChipsInput({ emails, input, onInputChange, onAdd, onRemove }: EmailChipsInputProps) {
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const tryAdd = () => {
+    const trimmed = input.trim().replace(/,+$/, '')
+    if (trimmed && trimmed.includes('@') && !emails.includes(trimmed)) {
+      onAdd(trimmed)
+      onInputChange('')
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' || e.key === ',' || e.key === 'Tab') {
+      e.preventDefault()
+      tryAdd()
+    }
+    if (e.key === 'Backspace' && !input && emails.length > 0) {
+      onRemove(emails[emails.length - 1])
+    }
+  }
+
+  return (
+    <div
+      onClick={() => inputRef.current?.focus()}
+      style={{
+        flex: 1, display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center',
+        background: 'var(--bg-2)', border: '1px solid var(--border)',
+        borderRadius: 4, padding: '4px 8px', cursor: 'text', minHeight: 28,
+      }}
+    >
+      {emails.map(email => (
+        <span key={email} style={{
+          display: 'inline-flex', alignItems: 'center', gap: 3,
+          background: 'var(--surface-2)', border: '1px solid var(--border)',
+          borderRadius: 3, padding: '1px 6px 1px 8px', fontSize: 11,
+          color: 'var(--text)', lineHeight: '18px',
+        }}>
+          {email}
+          <button
+            onClick={e => { e.stopPropagation(); onRemove(email) }}
+            style={{
+              background: 'transparent', border: 'none', cursor: 'pointer',
+              color: 'var(--text-mute)', padding: '0 0 0 2px', lineHeight: 1,
+              display: 'inline-flex', alignItems: 'center', fontSize: 14,
+            }}
+          >×</button>
+        </span>
+      ))}
+      <input
+        ref={inputRef}
+        value={input}
+        onChange={e => onInputChange(e.target.value)}
+        onKeyDown={handleKeyDown}
+        onBlur={tryAdd}
+        placeholder={emails.length === 0 ? 'Type email, press Enter or comma' : ''}
+        style={{
+          background: 'transparent', border: 'none', outline: 'none',
+          color: 'var(--text)', fontSize: 11, flex: 1, minWidth: 140,
+          fontFamily: 'inherit',
+        }}
+      />
+    </div>
+  )
+}
+
 const fieldInputStyle: React.CSSProperties = {
   width: '100%', boxSizing: 'border-box',
   background: 'var(--bg-2)', border: '1px solid var(--border)',
@@ -329,17 +404,42 @@ function TicketPropertiesPanel({ ticket, full, pendingAssigneeId, onAssigneeChan
   )
 }
 
+function ProseContent({ html }: { html: string }) {
+  const processed = html.replace(
+    /<img([^>]*?)(?:\s*\/?)>/gi,
+    (_, attrs: string) => {
+      const m = attrs.match(/src=["']([^"']*)["']/)
+      const src = m ? m[1] : ''
+      const openBtn = src
+        ? `<a href="${src}" target="_blank" rel="noreferrer noopener" class="prose-img-open">↗ Open</a>`
+        : ''
+      return `<span class="prose-img-wrap"><img${attrs}>${openBtn}</span>`
+    },
+  )
+  return <div className="tiptap-prose" dangerouslySetInnerHTML={{ __html: processed }} />
+}
+
 export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
   const [activeTab, setActiveTab] = useState<'thread' | 'info'>('thread')
   const [body, setBody] = useState('')
   const [isPublic, setIsPublic] = useState(true)
   const [submitAs, setSubmitAs] = useState('open')
   const [attachments, setAttachments] = useState<AttachmentEntry[]>([])
+  const [ccEmails, setCcEmails] = useState<string[]>([])
+  const [ccInput, setCcInput] = useState('')
+  const [showCc, setShowCc] = useState(false)
   const [showStatusMenu, setShowStatusMenu] = useState(false)
   const [showMacroMenu, setShowMacroMenu] = useState(false)
   const [expanded, setExpanded] = useState(
     () => localStorage.getItem('zd-panel-expanded') === 'true'
   )
+  const [panelWidth, setPanelWidth] = useState(
+    () => Number(localStorage.getItem('zd-panel-width')) || 640
+  )
+  const [editorHeight, setEditorHeight] = useState(
+    () => Number(localStorage.getItem('zd-editor-h')) || 120
+  )
+  const isResizing = useRef(false)
   // Pending property changes — flushed to ZD only on submit
   const [pendingAssigneeId, setPendingAssigneeId] = useState<number | null | undefined>(undefined)
   const [pendingFields, setPendingFields] = useState<Record<number, CustomFieldValue['value']>>({})
@@ -355,16 +455,23 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
   const { data: macrosData } = useMacros()
   const macros = macrosData ?? []
 
-  // Reset pending state and active tab when a different ticket is opened
+  // Reset compose state when a different ticket is opened
   useEffect(() => {
     setPendingAssigneeId(undefined)
     setPendingFields({})
     setActiveTab('thread')
+    setCcEmails([])
+    setCcInput('')
+    setShowCc(false)
   }, [ticket?.id])
 
-  // Enrich ticket in cache with comment timestamps for sort support
+  // Enrich ticket in cache with comment timestamps for sort support.
+  // Deps use ticket?.id (not ticket) to avoid an infinite loop:
+  // setQueryData(['tickets']) → Board re-renders → new ticket reference →
+  // enrichFromComments recreated → effect fires again → loop.
+  const ticketId = ticket?.id
   const enrichFromComments = useCallback(() => {
-    if (!full?.comments || !ticket) return
+    if (!full?.comments || !ticketId) return
     let lastRequesterReplyAt: number | null = null
     let lastAgentReplyAt: number | null = null
     for (const c of full.comments) {
@@ -376,13 +483,19 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
         if (!lastAgentReplyAt || ts > lastAgentReplyAt) lastAgentReplyAt = ts
       }
     }
+    // Skip write if values haven't changed — prevents unnecessary re-renders
+    const existing = queryClient.getQueryData<import('../types/ticket').Ticket[]>(['tickets'])
+      ?.find(t => t.id === ticketId)
+    if (existing?.lastRequesterReplyAt === lastRequesterReplyAt &&
+        existing?.lastAgentReplyAt === lastAgentReplyAt) return
     queryClient.setQueryData<import('../types/ticket').Ticket[]>(['tickets'], ts =>
-      ts?.map(t => t.id !== ticket.id ? t : { ...t, lastRequesterReplyAt, lastAgentReplyAt }) ?? []
+      ts?.map(t => t.id !== ticketId ? t : { ...t, lastRequesterReplyAt, lastAgentReplyAt }) ?? []
     )
-  }, [full?.comments, ticket, queryClient])
+  }, [full?.comments, ticketId, queryClient])
 
   useEffect(() => { enrichFromComments() }, [enrichFromComments])
 
+  // Scroll to bottom when comment count changes
   useEffect(() => {
     if (threadRef.current) {
       threadRef.current.scrollTop = threadRef.current.scrollHeight
@@ -439,18 +552,44 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
     const onSuccess = () => { showToast(ticket.id, status); onClose() }
 
     reply.mutate(
-      { htmlBody, isPublic, status, uploads: uploads.length ? uploads : undefined, assigneeId, customFields: customFields.length ? customFields : undefined },
+      { htmlBody, isPublic, status, uploads: uploads.length ? uploads : undefined, assigneeId, customFields: customFields.length ? customFields : undefined, ccEmails: ccEmails.length ? ccEmails : undefined },
       { onSuccess },
     )
     setBody('')
     editorRef.current?.clear()
     setAttachments([])
+    setCcEmails([])
+    setCcInput('')
     setPendingAssigneeId(undefined)
     setPendingFields({})
   }
 
   if (!ticket) return null
   const a = ASSIGNEES[ticket.assignee]
+
+  const startEditorResize = (e: React.MouseEvent) => {
+    e.preventDefault()
+    const startY = e.clientY
+    const startH = editorHeight
+
+    const onMove = (ev: MouseEvent) => {
+      const next = Math.max(60, Math.min(600, startH + (startY - ev.clientY)))
+      setEditorHeight(next)
+    }
+    const onUp = (ev: MouseEvent) => {
+      const final = Math.max(60, Math.min(600, startH + (startY - ev.clientY)))
+      localStorage.setItem('zd-editor-h', String(final))
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+
+    document.body.style.cursor = 'ns-resize'
+    document.body.style.userSelect = 'none'
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }
 
   // Main conversation + reply column
   const conversationCol = (
@@ -540,38 +679,58 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
         ? <RequesterPanel requesterId={full?.requester_id} nowMs={nowMs} />
         : <>
         {/* Thread */}
-        <div ref={threadRef} style={{ flex: 1, overflow: 'auto', padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div ref={threadRef} style={{ flex: 1, overflow: 'auto', padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 14, overflowAnchor: 'none' } as React.CSSProperties}>
           {isLoading && <div style={{ color: 'var(--text-mute)', fontSize: 12, textAlign: 'center', padding: 24 }}>Loading conversation…</div>}
           {!isLoading && comments.length === 0 && <div style={{ color: 'var(--text-mute)', fontSize: 12, textAlign: 'center', padding: 24 }}>No messages yet.</div>}
           {comments.map(c => {
             const isMe = c.author_id === MY_ASSIGNEE_ID
+            const isRequester = full?.requester_id != null && c.author_id === full.requester_id
+            const isInternal = !c.public
+            const isOtherAgent = !isMe && !isRequester
+
+            let bubbleBg: string
+            let bubbleBorder: string
+            let nameColor: string
+
+            if (isInternal) {
+              bubbleBg = 'var(--warn-soft)'; bubbleBorder = 'var(--warn)'; nameColor = 'var(--warn)'
+            } else if (isMe) {
+              bubbleBg = 'var(--accent-soft)'; bubbleBorder = 'var(--accent)'; nameColor = 'var(--accent)'
+            } else if (isRequester) {
+              bubbleBg = 'var(--info-soft)'; bubbleBorder = 'var(--info)'; nameColor = 'var(--info)'
+            } else {
+              bubbleBg = 'var(--violet-soft)'; bubbleBorder = 'var(--violet)'; nameColor = 'var(--violet)'
+            }
+
+            const alignRight = isMe
+
             return (
-              <div key={c.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4, flexDirection: isMe ? 'row-reverse' : 'row' }}>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: isMe ? 'var(--accent)' : 'var(--text-dim)' }}>{c.author_name}</span>
+              <div key={c.id} style={{ display: 'flex', flexDirection: 'column', alignItems: alignRight ? 'flex-end' : 'flex-start' }}>
+                {/* Author row */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4, flexDirection: alignRight ? 'row-reverse' : 'row' }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: nameColor }}>{c.author_name}</span>
+                  {isOtherAgent && !isInternal && (
+                    <span style={{ fontSize: 9, padding: '1px 5px', borderRadius: 3, background: 'var(--violet-soft)', color: 'var(--violet)', border: '1px solid var(--violet)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.4 }}>Agent</span>
+                  )}
+                  {isInternal && (
+                    <span style={{ fontSize: 9, padding: '1px 5px', borderRadius: 3, background: 'var(--warn-soft)', color: 'var(--warn)', border: '1px solid var(--warn)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.4 }}>Internal</span>
+                  )}
                   <span style={{ fontSize: 10, color: 'var(--text-mute)', fontFamily: 'var(--mono)' }}>
                     {timeSince(new Date(c.created_at).getTime(), nowMs)} ago
                   </span>
-                  {!c.public && (
-                    <span style={{
-                      fontSize: 9, padding: '1px 5px', borderRadius: 3,
-                      background: 'var(--warn-soft)', color: 'var(--warn)',
-                      border: '1px solid var(--warn)', fontWeight: 600,
-                      textTransform: 'uppercase', letterSpacing: 0.4,
-                    }}>Internal</span>
-                  )}
                 </div>
+                {/* Bubble */}
                 <div style={{
-                  maxWidth: '80%', padding: '10px 14px', borderRadius: 8,
-                  background: isMe ? 'var(--accent-soft)' : 'var(--surface)',
-                  border: `1px solid ${isMe ? 'var(--accent)' : 'var(--border)'}`,
-                  fontSize: 13, color: 'var(--text)', lineHeight: 1.5,
-                  borderTopRightRadius: isMe ? 2 : 8,
-                  borderTopLeftRadius: isMe ? 8 : 2,
+                  maxWidth: '85%', padding: '10px 14px', borderRadius: 8,
+                  background: bubbleBg,
+                  border: `1px solid ${bubbleBorder}`,
+                  fontSize: 13, color: 'var(--text)', lineHeight: 1.6,
+                  borderTopRightRadius: alignRight ? 2 : 8,
+                  borderTopLeftRadius: alignRight ? 8 : 2,
                   wordBreak: 'break-word',
                 }}>
                   {c.html_body
-                    ? <div className="tiptap-prose" dangerouslySetInnerHTML={{ __html: c.html_body }} />
+                    ? <ProseContent html={c.html_body} />
                     : <span style={{ whiteSpace: 'pre-wrap' }}>{c.body}</span>
                   }
                   {c.attachments?.map(att => <AttachmentPreview key={att.id} att={att} />)}
@@ -582,8 +741,24 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
         </div>
 
       {/* Reply box */}
-      <div style={{ padding: '12px 18px', borderTop: '1px solid var(--border)', background: 'var(--surface)', flexShrink: 0, position: 'relative' }}>
-        <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+      <div style={{ borderTop: '1px solid var(--border)', background: 'var(--surface)', flexShrink: 0, position: 'relative' }}>
+        {/* Vertical resize handle */}
+        <div
+          onMouseDown={startEditorResize}
+          title="Drag to resize composer"
+          style={{
+            height: 14, cursor: 'ns-resize', display: 'flex',
+            alignItems: 'center', justifyContent: 'center',
+            background: 'transparent', flexShrink: 0,
+          }}
+          onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = 'var(--surface-2)' }}
+          onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = 'transparent' }}
+        >
+          <div style={{ width: 40, height: 4, borderRadius: 2, background: 'var(--border)' }} />
+        </div>
+        <div style={{ padding: '8px 18px 12px' }}>
+        {/* Mode toggle */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
           {(['public', 'internal'] as const).map(mode => (
             <button key={mode} onClick={() => setIsPublic(mode === 'public')} style={{
               padding: '4px 10px', borderRadius: 4, fontSize: 11,
@@ -595,12 +770,83 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
             }}>{mode === 'public' ? 'Public reply' : 'Internal note'}</button>
           ))}
         </div>
+
+        {/* To / CC fields (public only) */}
+        {isPublic && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginBottom: 8 }}>
+            {/* To row */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 11, color: 'var(--text-mute)', width: 22, flexShrink: 0, fontWeight: 600, textAlign: 'right' }}>To</span>
+              <div style={{
+                flex: 1, display: 'flex', alignItems: 'center', gap: 6,
+                background: 'var(--bg-2)', border: '1px solid var(--border)',
+                borderRadius: 4, padding: '4px 10px', minHeight: 28,
+              }}>
+                {ticket.requesterName || ticket.requesterEmail
+                  ? <span style={{ fontSize: 11, color: 'var(--text)', fontWeight: 500 }}>
+                      {ticket.requesterName ?? ''}{ticket.requesterEmail
+                        ? <span style={{ color: 'var(--text-mute)', fontWeight: 400 }}>
+                            {ticket.requesterName ? ` <${ticket.requesterEmail}>` : ticket.requesterEmail}
+                          </span>
+                        : null}
+                    </span>
+                  : <span style={{ fontSize: 11, color: 'var(--text-mute)' }}>—</span>
+                }
+              </div>
+              {!showCc && (
+                <button
+                  onClick={() => setShowCc(true)}
+                  style={{
+                    fontSize: 11, fontWeight: 600, color: 'var(--text-mute)',
+                    background: 'transparent', border: '1px solid var(--border)',
+                    borderRadius: 4, padding: '3px 10px', cursor: 'pointer',
+                    letterSpacing: 0.3, flexShrink: 0,
+                  }}
+                >CC</button>
+              )}
+            </div>
+
+            {/* CC row */}
+            {showCc && (
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                <span style={{ fontSize: 11, color: 'var(--text-mute)', width: 22, flexShrink: 0, fontWeight: 600, textAlign: 'right', marginTop: 5 }}>CC</span>
+                <EmailChipsInput
+                  emails={ccEmails}
+                  input={ccInput}
+                  onInputChange={setCcInput}
+                  onAdd={email => setCcEmails(prev => [...prev, email])}
+                  onRemove={email => setCcEmails(prev => prev.filter(e => e !== email))}
+                />
+                <button
+                  onClick={() => { setShowCc(false); setCcEmails([]); setCcInput('') }}
+                  style={{
+                    background: 'transparent', border: 'none', cursor: 'pointer',
+                    color: 'var(--text-mute)', fontSize: 14, padding: '4px', lineHeight: 1,
+                    flexShrink: 0,
+                  }}
+                  title="Remove CC"
+                >×</button>
+              </div>
+            )}
+          </div>
+        )}
         <RichTextEditor
           ref={editorRef}
           onChange={setBody}
           placeholder={isPublic ? 'Write a reply to the customer…' : 'Write an internal note…'}
           isPublic={isPublic}
           onKeyboardSubmit={handleSend}
+          editorHeight={editorHeight}
+          onDropAttachment={async (file) => {
+            const tempId = Date.now() + Math.random()
+            setAttachments(prev => [...prev, { tempId, file, token: null, uploading: true }])
+            try {
+              const token = await uploadAttachment(file)
+              setAttachments(prev => prev.map(a => a.tempId === tempId ? { ...a, token, uploading: false } : a))
+            } catch {
+              setAttachments(prev => prev.filter(a => a.tempId !== tempId))
+            }
+          }}
         />
         {attachments.length > 0 && (
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 6 }}>
@@ -701,6 +947,7 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
             </div>
           </div>
         </div>
+        </div>{/* /inner padding */}
       </div>
       </>}
     </div>
@@ -734,16 +981,55 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
     )
   }
 
+  const startResize = (e: React.MouseEvent) => {
+    e.preventDefault()
+    isResizing.current = true
+    const startX = e.clientX
+    const startW = panelWidth
+
+    const onMove = (ev: MouseEvent) => {
+      if (!isResizing.current) return
+      const next = Math.max(380, Math.min(window.innerWidth - 80, startW + (startX - ev.clientX)))
+      setPanelWidth(next)
+    }
+    const onUp = (ev: MouseEvent) => {
+      isResizing.current = false
+      const final = Math.max(380, Math.min(window.innerWidth - 80, startW + (startX - ev.clientX)))
+      localStorage.setItem('zd-panel-width', String(final))
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+
+    document.body.style.cursor = 'ew-resize'
+    document.body.style.userSelect = 'none'
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }
+
   // Drawer: right panel
   return (
     <div style={{
-      position: 'fixed', top: 0, right: 0, bottom: 0, width: 640,
+      position: 'fixed', top: 0, right: 0, bottom: 0, width: panelWidth,
       background: 'var(--bg-2)', borderLeft: '1px solid var(--border)',
       boxShadow: '-16px 0 40px rgba(0,0,0,0.45)',
-      display: 'flex', flexDirection: 'column', zIndex: 60,
+      display: 'flex', flexDirection: 'row', zIndex: 60,
       animation: 'slideIn 0.2s ease-out',
     }}>
-      {conversationCol}
+      {/* Resize handle */}
+      <div
+        onMouseDown={startResize}
+        style={{
+          position: 'absolute', left: 0, top: 0, bottom: 0, width: 5,
+          cursor: 'ew-resize', zIndex: 10,
+        }}
+        onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = 'var(--accent)'; (e.currentTarget as HTMLDivElement).style.opacity = '0.4' }}
+        onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = 'transparent' }}
+      />
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+        {conversationCol}
+      </div>
     </div>
   )
 }

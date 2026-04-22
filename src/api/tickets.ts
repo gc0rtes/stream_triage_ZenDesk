@@ -339,12 +339,14 @@ export async function submitReply(
     uploads?: string[];
     assigneeId?: number | null;
     customFields?: CustomFieldValue[];
+    ccEmails?: string[];
   },
 ): Promise<void> {
   const ticket: Record<string, unknown> = {};
   if (opts.status) ticket.status = opts.status;
   if (opts.assigneeId !== undefined) ticket.assignee_id = opts.assigneeId;
   if (opts.customFields?.length) ticket.custom_fields = opts.customFields;
+  if (opts.ccEmails?.length) ticket.additional_collaborators = opts.ccEmails.map(email => ({ email }));
   const commentBody = opts.htmlBody?.trim() || opts.body?.trim();
   if (commentBody) {
     ticket.comment = {
@@ -370,6 +372,19 @@ export async function uploadAttachment(file: File): Promise<string> {
     },
   );
   return data.upload.token;
+}
+
+export async function uploadAttachmentFull(file: File): Promise<{ token: string; contentUrl: string }> {
+  const params = new URLSearchParams({ filename: file.name });
+  const data = await zdFetch<{ upload: { token: string; attachment: { content_url: string } } }>(
+    `/uploads.json?${params}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": file.type || "application/octet-stream" },
+      body: file,
+    },
+  );
+  return { token: data.upload.token, contentUrl: data.upload.attachment.content_url };
 }
 
 export interface ZDAgent {
