@@ -427,6 +427,8 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
   const [isPublic, setIsPublic] = useState(true)
   const [submitAs, setSubmitAs] = useState('open')
   const [attachments, setAttachments] = useState<AttachmentEntry[]>([])
+  const [inlineImages, setInlineImages] = useState<Array<{ token: string; contentUrl: string; blobUrl: string }>>([])
+
   const [ccEmails, setCcEmails] = useState<string[]>([])
   const [ccInput, setCcInput] = useState('')
   const [showCc, setShowCc] = useState(false)
@@ -546,8 +548,11 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
     setSubmitAs(status)
     setShowStatusMenu(false)
 
-    const htmlBody = body.trim() || undefined
-    const uploads = attachments.filter(a => a.token).map(a => a.token!)
+    let htmlBody = body.trim() || undefined
+    for (const { blobUrl, contentUrl } of inlineImages) {
+      htmlBody = htmlBody?.replaceAll(blobUrl, contentUrl)
+    }
+    const uploads = [...attachments.filter(a => a.token).map(a => a.token!), ...inlineImages.map(i => i.token)]
     const customFields = Object.entries(pendingFields).map(([id, value]) => ({ id: Number(id), value }))
     const assigneeId = pendingAssigneeId
 
@@ -560,6 +565,8 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
     setBody('')
     editorRef.current?.clear()
     setAttachments([])
+    for (const { blobUrl } of inlineImages) URL.revokeObjectURL(blobUrl)
+    setInlineImages([])
     setCcEmails([])
     setCcInput('')
     setPendingAssigneeId(undefined)
@@ -849,6 +856,7 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
               setAttachments(prev => prev.filter(a => a.tempId !== tempId))
             }
           }}
+          onInlineUpload={(token, contentUrl, blobUrl) => setInlineImages(prev => [...prev, { token, contentUrl, blobUrl }])}
         />
         {attachments.length > 0 && (
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 6 }}>

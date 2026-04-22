@@ -28,6 +28,7 @@ interface RichTextEditorProps {
   isPublic?: boolean
   onKeyboardSubmit?: () => void
   onDropAttachment?: (file: File) => void
+  onInlineUpload?: (token: string, contentUrl: string, blobUrl: string) => void
   editorHeight?: number
 }
 
@@ -425,7 +426,7 @@ function Toolbar({ editor }: ToolbarProps) {
 // ── Main component ─────────────────────────────────────────────────────────────
 
 export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorProps>(
-  function RichTextEditor({ onChange, placeholder, isPublic, onKeyboardSubmit, onDropAttachment, editorHeight }, ref) {
+  function RichTextEditor({ onChange, placeholder, isPublic, onKeyboardSubmit, onDropAttachment, onInlineUpload, editorHeight }, ref) {
     const [dropFile, setDropFile] = useState<File | null>(null)
     const [uploading, setUploading] = useState(false)
     const [isDragOver, setIsDragOver] = useState(false)
@@ -479,15 +480,20 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
 
     const insertInline = useCallback(async () => {
       if (!dropFile || !editor) return
+      const file = dropFile
       setDropFile(null)
       setUploading(true)
+      const blobUrl = URL.createObjectURL(file)
       try {
-        const { contentUrl } = await uploadAttachmentFull(dropFile)
-        editor.chain().focus().setImage({ src: contentUrl, alt: dropFile.name }).run()
+        const { token, contentUrl } = await uploadAttachmentFull(file)
+        onInlineUpload?.(token, contentUrl, blobUrl)
+        editor.chain().focus().setImage({ src: blobUrl, alt: file.name }).run()
+      } catch {
+        URL.revokeObjectURL(blobUrl)
       } finally {
         setUploading(false)
       }
-    }, [dropFile, editor])
+    }, [dropFile, editor, onInlineUpload])
 
     const addAsAttachment = useCallback(() => {
       if (!dropFile) return
