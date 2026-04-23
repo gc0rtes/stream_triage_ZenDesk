@@ -58,7 +58,21 @@ body {
 .tiptap em { font-style: italic; }
 
 /* Shared prose styles for rendered HTML in comment thread */
-.tiptap-prose { font-size: 13px; line-height: 1.6; }
+.tiptap-prose {
+  font-size: 13px;
+  line-height: 1.6;
+  user-select: text;
+  -webkit-user-select: text;
+}
+/* Nested nodes inherit selectable text (some WebKit builds need this for HTML bodies). */
+.tiptap-prose * {
+  user-select: text;
+  -webkit-user-select: text;
+}
+.tiptap-prose img {
+  user-select: none;
+  -webkit-user-select: none;
+}
 .tiptap-prose p { margin-bottom: 4px; }
 .tiptap-prose h1, .tiptap-prose h2, .tiptap-prose h3 { font-weight: 700; margin-bottom: 5px; }
 .tiptap-prose ul, .tiptap-prose ol { padding-left: 20px; margin-bottom: 6px; }

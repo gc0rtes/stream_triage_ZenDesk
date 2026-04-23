@@ -20,6 +20,8 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
+const VIEWED_AGENT_STORAGE_KEY = 'zd-viewed-agent-id'
+
 function loadStoredUser(): AuthUser | null {
   const id = localStorage.getItem('zd-user-id')
   const name = localStorage.getItem('zd-user-name')
@@ -30,10 +32,23 @@ function loadStoredUser(): AuthUser | null {
   return null
 }
 
+function loadViewedAgentId(): number | null {
+  const s = localStorage.getItem(VIEWED_AGENT_STORAGE_KEY)
+  if (s == null || s === '') return null
+  const n = Number(s)
+  return Number.isFinite(n) ? n : null
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(loadStoredUser)
   const [colleagues, setColleagues] = useState<ZDAgent[]>([])
-  const [viewedAgentId, setViewedAgentId] = useState<number | null>(null)
+  const [viewedAgentId, setViewedAgentIdState] = useState<number | null>(loadViewedAgentId)
+
+  const setViewedAgentId = useCallback((id: number | null) => {
+    setViewedAgentIdState(id)
+    if (id == null) localStorage.removeItem(VIEWED_AGENT_STORAGE_KEY)
+    else localStorage.setItem(VIEWED_AGENT_STORAGE_KEY, String(id))
+  }, [])
 
   const loadColleagues = useCallback(async () => {
     try {
@@ -71,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
     setColleagues([])
     setViewedAgentId(null)
-  }, [])
+  }, [setViewedAgentId])
 
   const value: AuthContextValue = {
     user,

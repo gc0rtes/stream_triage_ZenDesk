@@ -71,4 +71,13 @@ describe('TopBar', () => {
     expect(screen.getByText('PRO')).toBeTruthy();
     expect(screen.getByText('FREE')).toBeTruthy();
   });
+
+  it('refresh control sits beside Support · Live', () => {
+    const onRefresh = vi.fn();
+    render(<TopBar {...defaultProps} onRefresh={onRefresh} />, { wrapper: Wrapper });
+    expect(screen.getByTitle('Refresh tickets')).toBeTruthy();
+    const live = screen.getByText('Support · Live');
+    const refresh = screen.getByTitle('Refresh tickets');
+    expect(live.compareDocumentPosition(refresh) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
 });

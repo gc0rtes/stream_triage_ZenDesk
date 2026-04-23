@@ -10,6 +10,13 @@ export interface ZDTicketField {
   custom_field_options?: Array<{ name: string; value: string }>;
 }
 
+/** Zendesk ticket form `agent_conditions` (Show Ticket Form API). */
+export interface ZDTicketFormAgentCondition {
+  parent_field_id: number;
+  value: string;
+  child_fields: Array<{ id: number }>;
+}
+
 export interface CustomFieldValue {
   id: number;
   value: string | string[] | boolean | null;
@@ -54,6 +61,34 @@ function domainFromEmail(email: string | undefined): string | null {
   const domain = parts.length >= 2 ? parts[parts.length - 2] : parts[0];
   if (FREE_EMAIL_DOMAINS.has(domain.toLowerCase())) return null;
   return domain.charAt(0).toUpperCase() + domain.slice(1);
+}
+
+/** Public mail host segment (e.g. gmail.com → Gmail) when there is no org / corporate domain. */
+function consumerBrandFromEmail(email: string | undefined): string | null {
+  if (!email) return null;
+  const host = email.split("@")[1];
+  if (!host) return null;
+  const parts = host.split(".");
+  const domain = parts.length >= 2 ? parts[parts.length - 2] : parts[0];
+  const d = domain.toLowerCase();
+  if (!FREE_EMAIL_DOMAINS.has(d)) return null;
+  return domain.charAt(0).toUpperCase() + domain.slice(1).toLowerCase();
+}
+
+/** Resolved ticket card / requester customer line (exported for unit tests). */
+export function resolveCustomerLabel(
+  organizationId: number | null,
+  orgName: string | undefined,
+  email: string | undefined,
+): string {
+  if (organizationId != null) {
+    return orgName ?? "Org-" + String(organizationId).slice(-5);
+  }
+  return (
+    domainFromEmail(email) ??
+    consumerBrandFromEmail(email) ??
+    "Unknown"
+  );
 }
 
 // --- Tier classification driven by subscriptionPlans.ts (source of truth) ---
@@ -121,9 +156,11 @@ function mapZDTicket(t: RawZDTicket, maps: SideloadMaps = { userMap: {}, orgMap:
     assignee:
       t.assignee_id === getMyAssigneeId() ? "GC" : t.assignee_id ? "OTHER" : "",
     linear: null,
-    customer: t.organization_id
-      ? (maps.orgMap[t.organization_id] ?? "Org-" + String(t.organization_id).slice(-5))
-      : (domainFromEmail(t.requester_id ? maps.emailMap[t.requester_id] : undefined) ?? "Unknown"),
+    customer: resolveCustomerLabel(
+      t.organization_id,
+      t.organization_id ? maps.orgMap[t.organization_id] : undefined,
+      t.requester_id ? maps.emailMap[t.requester_id] : undefined,
+    ),
     requesterName: t.requester_id ? (maps.userMap[t.requester_id] ?? null) : null,
     requesterEmail: t.requester_id ? (maps.emailMap[t.requester_id] ?? null) : null,
     lastRequesterReplyAt: null,
@@ -320,17 +357,22 @@ export async function fetchFullTicket(id: number): Promise<FullTicket> {
 export async function fetchFormFields(formId: number): Promise<{
   fieldIds: number[];
   fields: ZDTicketField[];
+  agentConditions: ZDTicketFormAgentCondition[];
 }> {
   const [{ ticket_form }, { ticket_fields }] = await Promise.all([
-    zdFetch<{ ticket_form: { ticket_field_ids: number[] } }>(
-      `/ticket_forms/${formId}.json`,
-    ),
+    zdFetch<{
+      ticket_form: {
+        ticket_field_ids: number[];
+        agent_conditions?: ZDTicketFormAgentCondition[];
+      };
+    }>(`/ticket_forms/${formId}.json`),
     zdFetch<{ ticket_fields: ZDTicketField[] }>("/ticket_fields.json"),
   ]);
   const idSet = new Set(ticket_form.ticket_field_ids);
   return {
     fieldIds: ticket_form.ticket_field_ids,
     fields: ticket_fields.filter((f) => idSet.has(f.id)),
+    agentConditions: ticket_form.agent_conditions ?? [],
   };
 }
 

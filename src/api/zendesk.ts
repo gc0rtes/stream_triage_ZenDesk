@@ -29,6 +29,23 @@ export async function zdFetch<T>(path: string, options?: RequestInit): Promise<T
   }
 
   const res = await fetch(`${BASE_URL}${path}`, { ...options, headers })
-  if (!res.ok) throw new Error(`ZD fetch error ${res.status}: ${path}`)
+  if (!res.ok) {
+    const raw = await res.text()
+    let detail = ''
+    try {
+      const errBody = JSON.parse(raw) as { error?: string; description?: string }
+      detail =
+        (typeof errBody.error === 'string' && errBody.error) ||
+        (typeof errBody.description === 'string' && errBody.description) ||
+        raw.slice(0, 400)
+    } catch {
+      detail = raw.slice(0, 400)
+    }
+    throw new Error(
+      detail.trim()
+        ? `Zendesk API ${res.status} (${path}): ${detail.trim()}`
+        : `Zendesk API ${res.status}: ${path}`,
+    )
+  }
   return res.json() as Promise<T>
 }

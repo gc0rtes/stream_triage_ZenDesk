@@ -1,8 +1,6 @@
 import { useState, useRef, forwardRef, useImperativeHandle, useCallback } from 'react'
 import { useEditor, EditorContent, NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
-import Underline from '@tiptap/extension-underline'
-import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
 import { TextStyle } from '@tiptap/extension-text-style'
 import Color from '@tiptap/extension-color'
@@ -433,9 +431,13 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
 
     const editor = useEditor({
       extensions: [
-        StarterKit,
-        Underline,
-        Link.configure({ openOnClick: false, HTMLAttributes: { rel: 'noreferrer', target: '_blank' } }),
+        // StarterKit already registers link + underline; configure here to avoid duplicate extensions.
+        StarterKit.configure({
+          link: {
+            openOnClick: false,
+            HTMLAttributes: { rel: 'noreferrer', target: '_blank' },
+          },
+        }),
         Placeholder.configure({ placeholder: placeholder ?? 'Write a reply…' }),
         TextStyle,
         Color,

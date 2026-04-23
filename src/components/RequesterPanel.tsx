@@ -1,5 +1,7 @@
+import { useState, useCallback } from 'react'
 import type { ZDRequesterInfo } from '../api/tickets'
 import { useRequesterInfo } from '../hooks/useRequesterInfo'
+import { IconCopy, IconExternalLink } from './icons'
 
 // Maps common Rails timezone names to IANA names for Intl.DateTimeFormat
 const TZ_MAP: Record<string, string> = {
@@ -83,6 +85,19 @@ interface RequesterInfoBodyProps {
 }
 
 function RequesterInfoBody({ info, nowMs }: RequesterInfoBodyProps) {
+  const [copied, setCopied] = useState(false)
+  const copyEmail = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(info.email)
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 2000)
+    } catch {
+      /* ignore */
+    }
+  }, [info.email])
+
+  const nessyHref = `https://getstream.io/nessy/?q=${encodeURIComponent(info.email)}`
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 0, overflowY: 'auto', flex: 1 }}>
       {/* Avatar + name */}
@@ -105,7 +120,37 @@ function RequesterInfoBody({ info, nowMs }: RequesterInfoBodyProps) {
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <InfoRow label="Email" value={
-            <a href={`mailto:${info.email}`} style={{ color: 'var(--accent)', textDecoration: 'none' }}>{info.email}</a>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <a href={`mailto:${info.email}`} style={{ color: 'var(--accent)', textDecoration: 'none' }}>{info.email}</a>
+              <button
+                type="button"
+                onClick={() => void copyEmail()}
+                title="Copy email"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  width: 26, height: 26, borderRadius: 5, border: '1px solid var(--border)',
+                  background: 'var(--surface-2)', color: 'var(--text-dim)', cursor: 'pointer', padding: 0,
+                }}
+              >
+                <IconCopy size={13} />
+              </button>
+              <a
+                href={nessyHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Open in Nessy"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  width: 26, height: 26, borderRadius: 5, border: '1px solid var(--border)',
+                  background: 'var(--surface-2)', color: 'var(--accent)', padding: 0,
+                }}
+              >
+                <IconExternalLink size={13} />
+              </a>
+              {copied && (
+                <span style={{ fontSize: 10, color: 'var(--accent)', fontWeight: 600 }}>Copied</span>
+              )}
+            </div>
           } />
           {info.organization_name && <InfoRow label="Organization" value={info.organization_name} />}
           <InfoRow label="Local time" value={localTime(info.time_zone, nowMs)} />

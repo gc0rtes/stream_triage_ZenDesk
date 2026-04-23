@@ -113,6 +113,24 @@ export function TopBar({
           background: 'var(--surface-2)', padding: '2px 5px', borderRadius: 3,
           textTransform: 'uppercase', letterSpacing: 0.5,
         }}>Support · Live</span>
+        <button
+          type="button"
+          onClick={onRefresh}
+          disabled={isRefreshing}
+          title="Refresh tickets"
+          style={{
+            padding: 5, borderRadius: 5, marginLeft: 2,
+            background: 'transparent', color: 'var(--text-dim)',
+            border: '1px solid var(--border)', cursor: isRefreshing ? 'default' : 'pointer',
+            display: 'inline-flex', alignItems: 'center',
+            opacity: isRefreshing ? 0.6 : 1,
+            flexShrink: 0,
+          }}
+        >
+          <IconRefresh size={13} style={{
+            animation: isRefreshing ? 'spin 0.8s linear infinite' : 'none',
+          }} />
+        </button>
       </div>
 
       {/* search */}
@@ -155,9 +173,30 @@ export function TopBar({
         ))}
       </div>
 
-      {/* colleague chips — click to view their board */}
-      {colleagues.length > 0 && (
-        <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+      {/* Me + colleague chips — click to choose whose board to view */}
+      {(user || colleagues.length > 0) && (
+        <div style={{ display: 'flex', gap: 4, flexShrink: 0, alignItems: 'center' }}>
+          {user && (
+            <button
+              type="button"
+              onClick={() => setViewedAgentId(null)}
+              title={`My board (${user.name})`}
+              style={{
+                width: 26, height: 26, borderRadius: '50%', padding: 0,
+                border: viewedAgentId == null ? `2px solid oklch(60% 0.18 ${user.id % 360})` : '2px solid transparent',
+                background: `oklch(${viewedAgentId == null ? '55%' : '40%'} 0.14 ${user.id % 360})`,
+                color: '#fff',
+                fontSize: 9, fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                opacity: viewedAgentId == null ? 1 : 0.7,
+                transition: 'opacity 0.15s, border-color 0.15s, background 0.15s',
+                flexShrink: 0,
+              }}
+            >
+              {user.name.split(' ').map((p: string) => p[0]).join('').toUpperCase().slice(0, 2)}
+            </button>
+          )}
           {colleagues.map(agent => (
             <ColleagueChip
               key={agent.id}
@@ -216,19 +255,6 @@ export function TopBar({
         flexShrink: 0,
       }}>
         <IconColumns size={13} />
-      </button>
-
-      <button onClick={onRefresh} disabled={isRefreshing} title="Refresh tickets" style={{
-        padding: 7, borderRadius: 5,
-        background: 'transparent', color: 'var(--text-dim)',
-        border: '1px solid var(--border)', cursor: isRefreshing ? 'default' : 'pointer',
-        display: 'inline-flex', alignItems: 'center',
-        opacity: isRefreshing ? 0.6 : 1,
-        flexShrink: 0,
-      }}>
-        <IconRefresh size={13} style={{
-          animation: isRefreshing ? 'spin 0.8s linear infinite' : 'none',
-        }} />
       </button>
 
       {/* preferences gear */}

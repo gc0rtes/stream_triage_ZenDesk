@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, memo } from 'react'
 import type { ChangeEvent } from 'react'
 import type { RichTextEditorHandle } from './RichTextEditor'
 import { RichTextEditor } from './RichTextEditor'
@@ -15,12 +15,20 @@ import { useMacros } from '../hooks/useMacros'
 import { useFormFields } from '../hooks/useFormFields'
 import { useAgents } from '../hooks/useAgents'
 import { getMyAssigneeId, uploadAttachment } from '../api/tickets'
+import { isCustomFieldVisibleForAgent } from '../utils/formFieldVisibility'
 import { useQueryClient } from '@tanstack/react-query'
 import { useToast } from './Toast'
 import { RequesterPanel } from './RequesterPanel'
 
 // Form 5.0 ID — the default ticket form for getstream ZD
 const FORM_5_ID = 37257437662487
+
+/** Zendesk macro `action.field`: bare numeric id or `ticket_field_{id}` → custom field id. */
+function macroActionCustomFieldId(field: string): number | null {
+  if (/^\d+$/.test(field)) return Number(field)
+  const m = /^ticket_field_(\d+)$/.exec(field)
+  return m ? Number(m[1]) : null
+}
 
 interface SidePanelProps {
   ticket: Ticket | null
@@ -283,15 +291,27 @@ interface TicketPropertiesPanelProps {
   pendingFields: Record<number, CustomFieldValue['value']>
   onFieldChange: (fieldId: number, value: CustomFieldValue['value']) => void
   submitting: boolean
+  onTakeIt: () => void
 }
 
-function TicketPropertiesPanel({ ticket, full, pendingAssigneeId, onAssigneeChange, pendingFields, onFieldChange, submitting }: TicketPropertiesPanelProps) {
+function TicketPropertiesPanel({
+  ticket, full, pendingAssigneeId, onAssigneeChange, pendingFields, onFieldChange, submitting,
+  onTakeIt,
+}: TicketPropertiesPanelProps) {
   const formId = (full?.ticket_form_id) ?? FORM_5_ID
   const { data: formData } = useFormFields(formId)
   const { data: agents = [] } = useAgents()
 
   const getVal = (fieldId: number): CustomFieldValue['value'] =>
     full?.custom_fields.find(cf => cf.id === fieldId)?.value ?? null
+
+  const effectiveFieldValue = useCallback(
+    (fieldId: number): CustomFieldValue['value'] | undefined => {
+      if (fieldId in pendingFields) return pendingFields[fieldId]
+      return full?.custom_fields.find(cf => cf.id === fieldId)?.value ?? null
+    },
+    [pendingFields, full],
+  )
 
   const savedAgentId = full?.assignee_id ?? null
   // Show pending value if changed, otherwise the saved value
@@ -302,6 +322,7 @@ function TicketPropertiesPanel({ ticket, full, pendingAssigneeId, onAssigneeChan
     ? formData.fieldIds
         .map(id => formData.fields.find(f => f.id === id))
         .filter((f): f is ZDTicketField => f !== undefined && !BUILTIN_TYPES.has(f.type))
+        .filter(f => isCustomFieldVisibleForAgent(f.id, formData.agentConditions, effectiveFieldValue))
     : []
 
   return (
@@ -326,6 +347,20 @@ function TicketPropertiesPanel({ ticket, full, pendingAssigneeId, onAssigneeChan
               <span style={{ fontSize: 11, color: 'var(--text-dim)', fontWeight: 600 }}>Assignee</span>
               {assigneeChanged && <span style={{ fontSize: 9, color: 'var(--warn)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.4 }}>unsaved</span>}
             </div>
+            <button
+              type="button"
+              onClick={onTakeIt}
+              disabled={submitting}
+              style={{
+                width: '100%', marginBottom: 8, padding: '6px 10px', borderRadius: 4,
+                border: '1px solid var(--accent)', background: 'var(--accent-soft)', color: 'var(--accent)',
+                fontSize: 11, fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase',
+                cursor: submitting ? 'default' : 'pointer', fontFamily: 'inherit',
+                opacity: submitting ? 0.6 : 1,
+              }}
+            >
+              Take it
+            </button>
             <select
               value={displayAgentId ?? ''}
               disabled={agents.length === 0 || submitting}
@@ -404,22 +439,45 @@ function TicketPropertiesPanel({ ticket, full, pendingAssigneeId, onAssigneeChan
   )
 }
 
-function ProseContent({ html }: { html: string }) {
-  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const target = e.target as HTMLElement
-    if (target.tagName === 'IMG') {
-      const src = (target as HTMLImageElement).src
-      if (src) window.open(src, '_blank', 'noreferrer noopener')
-    }
+/** Module-level handler so memoized body never gets a new onClick identity. */
+function threadProseClick(e: React.MouseEvent<HTMLDivElement>) {
+  const el = e.target as HTMLElement
+  const anchor = el.closest('a')
+  if (anchor && anchor.href) {
+    e.preventDefault()
+    window.open(anchor.href, '_blank', 'noopener,noreferrer')
+    return
   }
+  if (el.tagName === 'IMG') {
+    const src = (el as HTMLImageElement).src
+    if (src) window.open(src, '_blank', 'noreferrer noopener')
+  }
+}
+
+/**
+ * Renders ZD comment HTML. Memoized so parent re-renders (e.g. live `nowMs` clock)
+ * do not rewrite innerHTML and kill text selection.
+ */
+const ThreadHtmlBody = memo(function ThreadHtmlBody({ html }: { html: string }) {
   return (
     <div
       className="tiptap-prose"
+      style={{ userSelect: 'text', WebkitUserSelect: 'text' } as React.CSSProperties}
       dangerouslySetInnerHTML={{ __html: html }}
-      onClick={handleClick}
+      onClick={threadProseClick}
     />
   )
-}
+}, (a, b) => a.html === b.html)
+
+const ThreadPlainBody = memo(function ThreadPlainBody({ text }: { text: string }) {
+  return (
+    <span style={{
+      whiteSpace: 'pre-wrap',
+      userSelect: 'text',
+      WebkitUserSelect: 'text',
+    }}>{text}</span>
+  )
+}, (a, b) => a.text === b.text)
 
 export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
   const [activeTab, setActiveTab] = useState<'thread' | 'info'>('thread')
@@ -448,10 +506,12 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
   const [pendingAssigneeId, setPendingAssigneeId] = useState<number | null | undefined>(undefined)
   const [pendingFields, setPendingFields] = useState<Record<number, CustomFieldValue['value']>>({})
   const threadRef = useRef<HTMLDivElement>(null)
+  /** When false, do not jump scroll on new comments (avoids disrupting text selection while reading). */
+  const stickToBottomRef = useRef(true)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const editorRef = useRef<RichTextEditorHandle>(null)
 
-  const { showToast } = useToast()
+  const { showToast, showErrorToast } = useToast()
   const queryClient = useQueryClient()
   const { data: full, isLoading } = useFullTicket(ticket?.id ?? null)
   const comments = full?.comments ?? []
@@ -461,6 +521,7 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
 
   // Reset compose state when a different ticket is opened
   useEffect(() => {
+    stickToBottomRef.current = true
     setPendingAssigneeId(undefined)
     setPendingFields({})
     setActiveTab('thread')
@@ -468,6 +529,13 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
     setCcInput('')
     setShowCc(false)
   }, [ticket?.id])
+
+  const onThreadScroll = useCallback(() => {
+    const el = threadRef.current
+    if (!el) return
+    const dist = el.scrollHeight - el.scrollTop - el.clientHeight
+    stickToBottomRef.current = dist < 80
+  }, [])
 
   // Enrich ticket in cache with comment timestamps for sort support.
   // Deps use ticket?.id (not ticket) to avoid an infinite loop:
@@ -499,11 +567,11 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
 
   useEffect(() => { enrichFromComments() }, [enrichFromComments])
 
-  // Scroll to bottom when comment count changes
+  // Scroll to bottom when new messages arrive, only if user was already at bottom
   useEffect(() => {
-    if (threadRef.current) {
-      threadRef.current.scrollTop = threadRef.current.scrollHeight
-    }
+    const el = threadRef.current
+    if (!el || !stickToBottomRef.current) return
+    el.scrollTop = el.scrollHeight
   }, [comments.length])
 
   const toggleExpanded = () => {
@@ -527,19 +595,33 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
     }
   }
 
-  const handleApplyMacro = (macro: ZDMacro) => {
+  const handleApplyMacro = useCallback((macro: ZDMacro) => {
+    const formId = (full?.ticket_form_id) ?? FORM_5_ID
+    const fd = queryClient.getQueryData<{ fieldIds: number[] }>(['form-fields', formId])
+    const allowedFieldIds = new Set(fd?.fieldIds ?? [])
+
     for (const action of macro.actions) {
-      if (action.field === 'comment_value_html') {
+      const f = action.field
+      const raw = Array.isArray(action.value) ? action.value.join(' ') : String(action.value ?? '')
+
+      if (f === 'comment_value_html') {
         editorRef.current?.setContent(String(action.value))
-      } else if (action.field === 'comment_value') {
+      } else if (f === 'comment_value') {
         editorRef.current?.setContent(`<p>${String(action.value)}</p>`)
       }
-      if (action.field === 'status' && ['open', 'pending', 'hold', 'solved'].includes(String(action.value)))
-        setSubmitAs(String(action.value))
-      if (action.field === 'comment_mode_is_public') setIsPublic(action.value === 'true')
+      if (f === 'status' && ['open', 'pending', 'hold', 'solved'].includes(raw))
+        setSubmitAs(raw)
+      if (f === 'comment_mode_is_public') setIsPublic(raw === 'true')
+      if (f === 'assignee_id' || f === 'assignee') {
+        const id = Number(raw)
+        if (!Number.isNaN(id)) setPendingAssigneeId(id)
+      }
+      const cfId = macroActionCustomFieldId(f)
+      if (cfId !== null && allowedFieldIds.has(cfId))
+        setPendingFields(prev => ({ ...prev, [cfId]: raw }))
     }
     setShowMacroMenu(false)
-  }
+  }, [full?.ticket_form_id, queryClient, setPendingAssigneeId, setPendingFields])
 
   const handleSend = () => handleSubmitAs(submitAs)
 
@@ -560,7 +642,12 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
 
     reply.mutate(
       { htmlBody, isPublic, status, uploads: uploads.length ? uploads : undefined, assigneeId, customFields: customFields.length ? customFields : undefined, ccEmails: ccEmails.length ? ccEmails : undefined },
-      { onSuccess },
+      {
+        onSuccess,
+        onError: (err: Error) => {
+          showErrorToast(err.message || 'Zendesk rejected the update')
+        },
+      },
     )
     setBody('')
     editorRef.current?.clear()
@@ -688,7 +775,11 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
         ? <RequesterPanel requesterId={full?.requester_id} nowMs={nowMs} />
         : <>
         {/* Thread */}
-        <div ref={threadRef} style={{ flex: 1, overflow: 'auto', padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 14, overflowAnchor: 'none' } as React.CSSProperties}>
+        <div
+          ref={threadRef}
+          onScroll={onThreadScroll}
+          style={{ flex: 1, overflow: 'auto', padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 14, overflowAnchor: 'none' } as React.CSSProperties}
+        >
           {isLoading && <div style={{ color: 'var(--text-mute)', fontSize: 12, textAlign: 'center', padding: 24 }}>Loading conversation…</div>}
           {!isLoading && comments.length === 0 && <div style={{ color: 'var(--text-mute)', fontSize: 12, textAlign: 'center', padding: 24 }}>No messages yet.</div>}
           {comments.map(c => {
@@ -714,8 +805,14 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
             const alignRight = isMe
 
             return (
-              <div key={c.id} style={{ display: 'flex', flexDirection: 'column', alignItems: alignRight ? 'flex-end' : 'flex-start' }}>
-                {/* Author row */}
+              <div
+                key={c.id}
+                style={{
+                  display: 'flex', flexDirection: 'column', alignItems: alignRight ? 'flex-end' : 'flex-start',
+                  userSelect: 'none',
+                }}
+              >
+                {/* Author row — no-select so selection stays inside the bubble body */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4, flexDirection: alignRight ? 'row-reverse' : 'row' }}>
                   <span style={{ fontSize: 11, fontWeight: 700, color: nameColor }}>{c.author_name}</span>
                   {isOtherAgent && !isInternal && (
@@ -737,11 +834,12 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
                   borderTopRightRadius: alignRight ? 2 : 8,
                   borderTopLeftRadius: alignRight ? 8 : 2,
                   wordBreak: 'break-word',
+                  userSelect: 'text',
+                  WebkitUserSelect: 'text',
                 }}>
                   {c.html_body
-                    ? <ProseContent html={c.html_body} />
-                    : <span style={{ whiteSpace: 'pre-wrap' }}>{c.body}</span>
-                  }
+                    ? <ThreadHtmlBody html={c.html_body} />
+                    : <ThreadPlainBody text={c.body} />}
                   {c.attachments?.map(att => <AttachmentPreview key={att.id} att={att} />)}
                 </div>
               </div>
@@ -914,7 +1012,7 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
             <div style={{ position: 'relative', display: 'inline-flex' }}>
               <button
                 onClick={handleSend}
-                disabled={reply.isPending || reply.isPending}
+                disabled={reply.isPending}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6,
                   padding: '8px 14px', borderRadius: '5px 0 0 5px', cursor: 'pointer',
@@ -922,7 +1020,7 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
                   color: 'var(--accent-ink)',
                   border: 'none', borderRight: '1px solid rgba(0,0,0,0.15)',
                   fontWeight: 600, fontSize: 12, letterSpacing: 0.4,
-                  textTransform: 'uppercase', opacity: (reply.isPending || reply.isPending) ? 0.6 : 1,
+                  textTransform: 'uppercase', opacity: reply.isPending ? 0.6 : 1,
                 }}
               >
                 <IconReply size={13} />
@@ -936,7 +1034,7 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
                   background: 'var(--accent)',
                   color: 'var(--accent-ink)',
                   border: 'none', fontWeight: 600, fontSize: 11,
-                  opacity: (reply.isPending || reply.isPending) ? 0.6 : 1,
+                  opacity: reply.isPending ? 0.6 : 1,
                 }}
               >▼</button>
               {showStatusMenu && (
@@ -984,6 +1082,7 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
             pendingFields={pendingFields}
             onFieldChange={(id, val) => setPendingFields(prev => ({ ...prev, [id]: val }))}
             submitting={reply.isPending}
+            onTakeIt={() => setPendingAssigneeId(getMyAssigneeId())}
           />
           {conversationCol}
         </div>
