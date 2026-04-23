@@ -721,7 +721,7 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
             padding: '5px 10px', borderRadius: 4, border: '1px solid var(--border)', fontWeight: 500,
           }}
         >Open in ZD ↗</a>
-        <button onClick={onClose} style={{
+        <button data-close-panel onClick={onClose} style={{
           background: 'transparent', border: 'none', cursor: 'pointer',
           color: 'var(--text-dim)', display: 'inline-flex', padding: 4, borderRadius: 4,
         }}><IconX size={16} /></button>
@@ -1119,7 +1119,7 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
 
   // Drawer: right panel
   return (
-    <div style={{
+    <div data-sidepanel style={{
       position: 'fixed', top: 0, right: 0, bottom: 0, width: panelWidth,
       background: 'var(--bg-2)', borderLeft: '1px solid var(--border)',
       boxShadow: '-16px 0 40px rgba(0,0,0,0.45)',

@@ -233,6 +233,7 @@ export function Column({
 
   return (
     <div
+      data-col={col.key}
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDropE}

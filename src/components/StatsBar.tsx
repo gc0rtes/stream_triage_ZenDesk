@@ -9,6 +9,7 @@ import { IconX } from './icons'
 import {
   fetchAgentSatisfactionReport,
   fetchSolvedTicketsInRangeForAgent,
+  fetchTicketSearchCount,
   zendeskAgentTicketUrl,
 } from '../api/tickets'
 
@@ -118,7 +119,6 @@ function buildSolvedChartData(
   })
 }
 
-interface OpenBreakdown { red: number; yellow: number; green: number; total: number }
 
 interface StatBoxProps { label: string; count: number; dotColor: string; bgColor: string; borderColor: string }
 function StatBox({ label, count, dotColor, bgColor, borderColor }: StatBoxProps) {
@@ -169,7 +169,6 @@ function Segment({
 
 interface StatsModalProps {
   agentName: string
-  breakdown: OpenBreakdown
   mainTab: StatsMainTab
   setMainTab: (t: StatsMainTab) => void
   volumeRange: StatsVolumeRange
@@ -185,7 +184,6 @@ interface StatsModalProps {
 
 function StatsModal({
   agentName,
-  breakdown,
   mainTab,
   setMainTab,
   volumeRange,
@@ -202,12 +200,27 @@ function StatsModal({
   const rangeEndMs = nowMs
   const rangeStartMs = nowMs - volDays * MS_DAY
 
+  // All three queries are agent-scoped: they count only the logged-in (or viewed) agent's tickets
   const solvedQuery = useQuery({
     queryKey: ['stats-solved', assigneeId, volumeRange],
+    queryFn: () => fetchSolvedTicketsInRangeForAgent(assigneeId, Date.now() - volDays * MS_DAY),
+    enabled: Boolean(assigneeId),
+    staleTime: 60_000,
+  })
+
+  const createdQuery = useQuery({
+    queryKey: ['stats-created', assigneeId, volumeRange],
     queryFn: () => {
-      const end = Date.now()
-      return fetchSolvedTicketsInRangeForAgent(assigneeId, end - volDays * MS_DAY)
+      const since = new Date(Date.now() - volDays * MS_DAY).toISOString().split('T')[0]
+      return fetchTicketSearchCount(`type:ticket assignee_id:${assigneeId} created>${since}`)
     },
+    enabled: Boolean(assigneeId),
+    staleTime: 60_000,
+  })
+
+  const unsolvedQuery = useQuery({
+    queryKey: ['stats-unsolved', assigneeId],
+    queryFn: () => fetchTicketSearchCount(`type:ticket assignee_id:${assigneeId} status<solved`),
     enabled: Boolean(assigneeId),
     staleTime: 60_000,
   })
@@ -224,8 +237,10 @@ function StatsModal({
 
   const inRangeSolved = useMemo(() => {
     const rows = solvedQuery.data ?? []
+    // Use day-aligned start so filter matches chart bucket boundaries (first bucket = 00:00:00)
+    const dayAlignedStart = startOfLocalDay(rangeStartMs)
     return rows.filter(
-      (s) => s.updatedAt >= rangeStartMs && s.updatedAt <= rangeEndMs,
+      (s) => s.updatedAt >= dayAlignedStart && s.updatedAt <= rangeEndMs,
     )
   }, [solvedQuery.data, rangeStartMs, rangeEndMs])
 
@@ -284,36 +299,29 @@ function StatsModal({
             <>
               <div style={{ marginBottom: 20 }}>
                 <div style={{ fontSize: 10, fontFamily: 'var(--mono)', color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 10 }}>
-                  Open tickets
+                  {volumeLabel}
                 </div>
                 <div style={{ display: 'flex', gap: 10 }}>
                   <StatBox
-                    label="Stale"
-                    count={breakdown.red}
-                    dotColor="var(--danger)"
-                    bgColor="var(--danger-soft)"
-                    borderColor="var(--danger)"
+                    label="Created"
+                    count={createdQuery.data ?? 0}
+                    dotColor="var(--text-dim)"
+                    bgColor="var(--surface-2)"
+                    borderColor="var(--border)"
                   />
                   <StatBox
-                    label="Medium"
-                    count={breakdown.yellow}
+                    label="Unsolved"
+                    count={unsolvedQuery.data ?? 0}
                     dotColor="var(--warn)"
                     bgColor="var(--warn-soft)"
                     borderColor="var(--warn)"
                   />
                   <StatBox
-                    label="Okay"
-                    count={breakdown.green}
+                    label="Solved"
+                    count={totalSolved}
                     dotColor="var(--accent)"
                     bgColor="var(--accent-soft)"
                     borderColor="var(--accent)"
-                  />
-                  <StatBox
-                    label="Total"
-                    count={breakdown.total}
-                    dotColor="var(--text-dim)"
-                    bgColor="var(--surface-2)"
-                    borderColor="var(--border)"
                   />
                 </div>
               </div>
@@ -612,7 +620,6 @@ export function StatsBar({ tickets, nowMs, staleHours, accentHue, onOpenTicket }
       {open && assigneeId != null && (
         <StatsModal
           agentName={agentName}
-          breakdown={{ red, yellow, green, total: openTickets.length }}
           mainTab={mainTab}
           setMainTab={setMainTab}
           volumeRange={volumeRange}

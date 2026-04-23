@@ -91,7 +91,7 @@ export function TopBar({
   const { user, colleagues, viewedAgentId, setViewedAgentId, logout } = useAuth();
 
   return (
-    <div style={{
+    <div data-topbar style={{
       display: 'flex', alignItems: 'center', gap: 12,
       padding: '10px 18px', borderBottom: '1px solid var(--border)',
       background: 'var(--bg)',

@@ -1,73 +1,146 @@
-# React + TypeScript + Vite
+# Triage Kanban
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Internal Zendesk Kanban board for Stream's support team. Fetches live tickets from `stream.zendesk.com` and organises them into smart columns — no manual sorting needed.
 
-Currently, two official plugins are available:
+![Board overview](docs/screenshots/board-overview.png)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Smart columns
 
-## Expanding the ESLint configuration
+Tickets are automatically routed into columns based on status, tier, and age. No manual assignment.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+| Column | What goes here |
+|---|---|
+| **Unassigned** | New tickets with no agent assigned |
+| **Priority open** | Enterprise accounts or tickets older than the stale cutoff |
+| **Standard open** | Non-enterprise tickets fresh enough to wait |
+| **On hold · Eng** | Hold tickets linked to a Linear task |
+| **On hold · FR** | Hold tickets parked as feature requests |
+| **Pending** | Waiting on customer reply |
+| **Recently solved** | Closed in the last 7 days |
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Each column header shows a pressure bar (green → yellow → red) and a tooltip explaining its routing rules.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+![Column routing tooltip](docs/screenshots/column-tooltip.png)
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+---
+
+### Ticket cards
+
+Each card surfaces everything needed to prioritise at a glance:
+
+- Ticket ID, tier badge (ENT / PRO / FREE), and status badge
+- Age since last update with stale/approaching indicators
+- Customer name and requester email
+- Assignee avatar, reply count, and sentiment icon
+- Linear task link when present
+
+![Ticket card](docs/screenshots/ticket-card.png)
+
+---
+
+### Drag and drop
+
+Drag any card between columns to update its status, hold type, or tags in Zendesk — no need to open the ticket.
+
+![Drag and drop](docs/screenshots/drag-drop.png)
+
+---
+
+### Ticket side panel
+
+Click a card to open the detail panel. Works as a right drawer or expands to a full centred modal.
+
+**Thread tab** — full conversation history with colour-coded bubbles (your replies, requester, other agents, internal notes). Inline image attachments, file previews.
+
+**Reply box** — public reply or internal note, CC field, rich text editor, file attachments, macro picker, and a submit button that lets you set the resulting status (Open / Pending / On-hold / Solved) in one click.
+
+**Requester tab** — requester profile, editable custom fields, tag editor, and assignee selector with a "Take it" shortcut.
+
+![Side panel thread](docs/screenshots/sidepanel-thread.png)
+![Side panel reply](docs/screenshots/sidepanel-reply.png)
+
+---
+
+### Filters and search
+
+- **Search** across ticket subject, customer name, and tags
+- **Tier filter** — toggle Enterprise, Pro, Free independently
+- **Assignee switcher** — click any team member's avatar to see their board; click yours to return to your own
+
+![Filters](docs/screenshots/topbar-filters.png)
+
+---
+
+### Stats bar
+
+Live counts in the top bar: stale tickets (red), medium-aged (yellow), healthy (green), total open, and solved in the last 7 days. Click to open the full stats modal.
+
+**Stats modal — Board tab:** breakdown of open tickets by urgency + solved bar chart with 7d / 30d / 90d range selector.
+
+**Stats modal — Satisfaction tab:** CSAT good/bad/offered/% positive and a list of tickets with surveys sent.
+
+![Stats modal](docs/screenshots/stats-modal.png)
+
+---
+
+### Themes and preferences
+
+Four built-in themes (Dark, Midnight, Warm, Light) selectable from the gear menu. Choice persists in `localStorage`.
+
+![Theme picker](docs/screenshots/theme-picker.png)
+
+---
+
+### Column configuration
+
+Toggle column visibility and reorder columns via the columns button in the top bar.
+
+---
+
+## Setup
+
+### Prerequisites
+
+- Node.js 18+
+- A Zendesk account on `stream.zendesk.com` with agent access
+
+### Install
+
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Configure credentials
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Create `.env.local` (never committed):
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
 ```
+VITE_ZD_EMAIL=you@getstream.io
+VITE_ZD_TOKEN=your_zendesk_api_token
+```
+
+Generate an API token in Zendesk under **Admin → Apps & Integrations → Zendesk API**.
+
+### Run
+
+```bash
+npm run dev       # dev server with HMR
+npm run build     # type-check + production build
+npm run lint      # ESLint
+npm test          # Vitest
+```
+
+---
+
+## Tech
+
+- React 19 (no Next.js — pure client-side)
+- TypeScript strict mode
+- Vite
+- CSS custom properties (`oklch`) — no Tailwind
+- Native HTML5 drag and drop
+- Zendesk REST API v2

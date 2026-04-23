@@ -132,6 +132,7 @@ export function TicketCard({ t, nowMs, staleHours, onOpen, onAssign, style, styl
 
   return (
     <div
+      data-ticket-id={t.id}
       draggable
       onDragStart={onDragStart}
       onClick={() => onOpen(t)}

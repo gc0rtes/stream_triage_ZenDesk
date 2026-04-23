@@ -558,20 +558,46 @@ async function fetchAllSearchTickets(
   return acc;
 }
 
-/** Solved tickets assigned to `assigneeId` with `updated_at` after `sinceMs` (paginated search). */
+/** Solved tickets assigned to `assigneeId` with `solved_at` after `sinceMs` (paginated search). */
 export async function fetchSolvedTicketsInRangeForAgent(
   assigneeId: number,
   sinceMs: number,
   maxPages?: number,
 ): Promise<Array<{ id: number; subject: string; updatedAt: number }>> {
-  const since = new Date(sinceMs).toISOString().split("T")[0];
-  const q = `type:ticket assignee_id:${assigneeId} status:solved updated>${since}`;
+  // Align to local midnight so chart day-buckets and this filter share the same boundary
+  const aligned = new Date(sinceMs)
+  aligned.setHours(0, 0, 0, 0)
+  const since = aligned.toISOString().split("T")[0];
+  // solved> matches solved_at (the ZD Explore field) rather than updated_at
+  const q = `type:ticket assignee_id:${assigneeId} solved>${since}`;
   const raw = await fetchAllSearchTickets(q, maxPages ?? 40);
   return raw.map((t) => ({
     id: t.id,
     subject: t.subject,
     updatedAt: new Date(t.updated_at).getTime(),
   }));
+}
+
+/** Team-wide solved tickets updated since `sinceMs` — no assignee filter, matches ZD Explore totals. */
+export async function fetchSolvedTicketsTeamWide(
+  sinceMs: number,
+  maxPages?: number,
+): Promise<Array<{ id: number; subject: string; updatedAt: number }>> {
+  const since = new Date(sinceMs).toISOString().split("T")[0];
+  const q = `type:ticket status:solved updated>${since}`;
+  const raw = await fetchAllSearchTickets(q, maxPages ?? 40);
+  return raw.map((t) => ({
+    id: t.id,
+    subject: t.subject,
+    updatedAt: new Date(t.updated_at).getTime(),
+  }));
+}
+
+/** Fast ticket count via /search/count.json — no pagination needed. */
+export async function fetchTicketSearchCount(query: string): Promise<number> {
+  const params = new URLSearchParams({ query });
+  const data = await zdFetch<{ count: number }>(`/search/count.json?${params}`);
+  return data.count ?? 0;
 }
 
 /** Legacy CSAT row from `GET /api/v2/satisfaction_ratings` (admin-only; no assignee filter in API). */
