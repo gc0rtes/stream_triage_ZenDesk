@@ -10,7 +10,7 @@ Internal Zendesk Kanban board for Stream's support team. Fetches live tickets fr
 
 ### Smart columns
 
-Tickets are automatically routed into columns based on status, tier, and age. No manual assignment.
+Tickets are automatically routed into columns based on status, tier, and age.
 
 | Column | What goes here |
 |---|---|
@@ -22,7 +22,7 @@ Tickets are automatically routed into columns based on status, tier, and age. No
 | **Pending** | Waiting on customer reply |
 | **Recently solved** | Closed in the last 7 days |
 
-Each column header shows a pressure bar (green → yellow → red) and a tooltip explaining its routing rules.
+Each column header shows a status bar (green → yellow → red) and a tooltip explaining its routing rules.
 
 ![Column routing tooltip](docs/screenshots/column-tooltip.png)
 
@@ -123,7 +123,9 @@ VITE_ZD_EMAIL=you@getstream.io
 VITE_ZD_TOKEN=your_zendesk_api_token
 ```
 
-Generate an API token in Zendesk under **Admin → Apps & Integrations → Zendesk API**.
+Generate an API token in Zendesk under **Admin → Apps & Integrations → API Tokens**.
+[https://getstream.zendesk.com/admin/apps-integrations/apis/api-tokens] (https://getstream.zendesk.com/admin/apps-integrations/apis/api-tokens)
+
 
 ### Run
 
