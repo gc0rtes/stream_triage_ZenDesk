@@ -1,9 +1,14 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TopBar } from './TopBar';
 import { AuthProvider } from '../context/AuthContext';
 import type { Ticket } from '../types/ticket';
 import type { ReactNode } from 'react';
+
+const testQueryClient = new QueryClient({
+  defaultOptions: { queries: { retry: false } },
+});
 
 const NOW = Date.now();
 
@@ -29,7 +34,11 @@ function makeTicket(id: number): Ticket {
 }
 
 function Wrapper({ children }: { children: ReactNode }) {
-  return <AuthProvider>{children}</AuthProvider>;
+  return (
+    <QueryClientProvider client={testQueryClient}>
+      <AuthProvider>{children}</AuthProvider>
+    </QueryClientProvider>
+  );
 }
 
 const defaultProps = {

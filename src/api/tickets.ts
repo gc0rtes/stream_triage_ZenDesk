@@ -502,3 +502,164 @@ export async function fetchMacros(): Promise<ZDMacro[]> {
   );
   return data.macros;
 }
+
+// ── Stats: solved volume + satisfaction (Zendesk Search + Satisfaction Ratings API) ──
+
+interface ZendeskSearchPage {
+  results: RawZDTicket[];
+  next_page?: string | null;
+}
+
+/** Turn absolute `next_page` from ZD into a path for `zdFetch` (`BASE_URL` is `/api/v2`). */
+function searchNextPath(nextUrl: string | null | undefined): string | null {
+  if (!nextUrl) return null;
+  try {
+    const u = new URL(nextUrl);
+    const full = u.pathname + u.search;
+    return full.startsWith("/api/v2") ? full.slice("/api/v2".length) : full;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchAllSearchTickets(
+  query: string,
+  maxPages = 40,
+): Promise<RawZDTicket[]> {
+  const params = new URLSearchParams({
+    query,
+    per_page: "100",
+    sort_by: "updated_at",
+    sort_order: "desc",
+  });
+  let path: string | null = `/search.json?${params}`;
+  const acc: RawZDTicket[] = [];
+  for (let i = 0; i < maxPages && path; i++) {
+    const data = await zdFetch<ZendeskSearchPage>(path);
+    acc.push(...(data.results ?? []));
+    path = searchNextPath(data.next_page);
+  }
+  return acc;
+}
+
+/** Solved tickets assigned to `assigneeId` with `updated_at` after `sinceMs` (paginated search). */
+export async function fetchSolvedTicketsInRangeForAgent(
+  assigneeId: number,
+  sinceMs: number,
+  maxPages?: number,
+): Promise<Array<{ id: number; subject: string; updatedAt: number }>> {
+  const since = new Date(sinceMs).toISOString().split("T")[0];
+  const q = `type:ticket assignee_id:${assigneeId} status:solved updated>${since}`;
+  const raw = await fetchAllSearchTickets(q, maxPages ?? 40);
+  return raw.map((t) => ({
+    id: t.id,
+    subject: t.subject,
+    updatedAt: new Date(t.updated_at).getTime(),
+  }));
+}
+
+/** Legacy CSAT row from `GET /api/v2/satisfaction_ratings` (admin-only; no assignee filter in API). */
+export interface ZDSatisfactionRating {
+  id: number;
+  assignee_id: number;
+  ticket_id: number;
+  score: string;
+  comment: string | null;
+  created_at: string;
+  requester_id: number;
+  group_id: number;
+}
+
+/** Map search hits to rows without a second date pass (Zendesk `updated>` already scopes the query). */
+function mapSearchTicketsBasic(
+  raw: RawZDTicket[],
+): Array<{ id: number; subject: string; updatedAt: number }> {
+  return raw.map((t) => ({
+    id: t.id,
+    subject: t.subject,
+    updatedAt: new Date(t.updated_at).getTime(),
+  }));
+}
+
+function mergeTicketsById(
+  chunks: RawZDTicket[][],
+): Array<{ id: number; subject: string; updatedAt: number }> {
+  const seen = new Set<number>();
+  const out: Array<{ id: number; subject: string; updatedAt: number }> = [];
+  for (const chunk of chunks) {
+    for (const t of chunk) {
+      if (seen.has(t.id)) continue;
+      seen.add(t.id);
+      out.push({
+        id: t.id,
+        subject: t.subject,
+        updatedAt: new Date(t.updated_at).getTime(),
+      });
+    }
+  }
+  return out;
+}
+
+/**
+ * Tickets that received a satisfaction survey offer (agent-scoped search).
+ * @see https://developer.zendesk.com/api-reference/ticketing/ticket-management/search/
+ */
+export async function fetchOfferedTicketsViaSearch(
+  assigneeId: number,
+  sinceMs: number,
+  _rangeEndMs: number,
+  maxPages?: number,
+): Promise<Array<{ id: number; subject: string; updatedAt: number }>> {
+  const since = new Date(sinceMs).toISOString().split("T")[0];
+  // Zendesk Support search uses `satisfaction:` (not `satisfaction_rating:`).
+  // See https://support.zendesk.com/hc/en-us/articles/4408886879258
+  const q = `type:ticket assignee_id:${assigneeId} satisfaction:offered updated>${since}`;
+  const raw = await fetchAllSearchTickets(q, maxPages ?? 25);
+  return mapSearchTicketsBasic(raw);
+}
+
+/** Agent-scoped CSAT buckets from ticket search (works for typical agents; capped by search pagination). */
+export interface AgentSatisfactionReport {
+  offeredTickets: Array<{ id: number; subject: string; updatedAt: number }>;
+  goodTickets: Array<{ id: number; subject: string; updatedAt: number }>;
+  badTickets: Array<{ id: number; subject: string; updatedAt: number }>;
+}
+
+export async function fetchAgentSatisfactionReport(
+  assigneeId: number,
+  rangeStartMs: number,
+  _rangeEndMs: number,
+): Promise<AgentSatisfactionReport> {
+  const since = new Date(rangeStartMs).toISOString().split("T")[0];
+  const base = `type:ticket assignee_id:${assigneeId} updated>${since}`;
+  const maxPages = 30;
+
+  const [
+    offeredRaw,
+    goodRaw,
+    goodCommentRaw,
+    badRaw,
+    badCommentRaw,
+  ] = await Promise.all([
+    fetchAllSearchTickets(`${base} satisfaction:offered`, maxPages),
+    fetchAllSearchTickets(`${base} satisfaction:good`, maxPages),
+    fetchAllSearchTickets(`${base} satisfaction:goodwithcomment`, maxPages),
+    fetchAllSearchTickets(`${base} satisfaction:bad`, maxPages),
+    fetchAllSearchTickets(`${base} satisfaction:badwithcomment`, maxPages),
+  ]);
+
+  const offeredTickets = mapSearchTicketsBasic(offeredRaw);
+  const goodTickets = mergeTicketsById([goodRaw, goodCommentRaw]);
+  const badTickets = mergeTicketsById([badRaw, badCommentRaw]);
+
+  return {
+    offeredTickets,
+    goodTickets,
+    badTickets,
+  };
+}
+
+export function zendeskAgentTicketUrl(ticketId: number): string {
+  const sub = import.meta.env.VITE_ZD_SUBDOMAIN ?? "getstream";
+  return `https://${sub}.zendesk.com/agent/tickets/${ticketId}`;
+}

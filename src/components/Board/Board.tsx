@@ -204,6 +204,32 @@ export default function Board() {
     void refetch();
   }, [refetch]);
 
+  const handleStatsOpenTicket = useCallback((ticketId: number) => {
+    const existing = serverTickets.find((t) => t.id === ticketId);
+    if (existing) {
+      setSelected(existing);
+      return;
+    }
+    setSelected({
+      id: ticketId,
+      subject: `Ticket #${ticketId}`,
+      status: 'solved',
+      tier: 'free',
+      holdType: null,
+      tags: [],
+      updatedAt: Date.now(),
+      replies: 0,
+      sentiment: null,
+      assignee: '',
+      linear: null,
+      customer: '',
+      requesterName: null,
+      requesterEmail: null,
+      lastRequesterReplyAt: null,
+      lastAgentReplyAt: null,
+    });
+  }, [serverTickets]);
+
   const toggleHidden = useCallback((key: ColumnKey) => {
     setHiddenColumns(prev => {
       const next = new Set(prev);
@@ -253,6 +279,7 @@ export default function Board() {
         accentHue={accentHue}
         theme={tweaks.theme}
         onThemeChange={handleThemeChange}
+        onStatsOpenTicket={handleStatsOpenTicket}
       />
       {viewedAgentId != null && (
         <ViewingBanner agentId={viewedAgentId} colleagues={colleagues} />

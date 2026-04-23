@@ -77,6 +77,7 @@ interface TopBarProps {
   accentHue: number;
   theme: string;
   onThemeChange: (t: ThemeKey) => void;
+  onStatsOpenTicket?: (ticketId: number) => void;
 }
 
 export function TopBar({
@@ -84,7 +85,7 @@ export function TopBar({
   tierFilter, setTierFilter,
   onRefresh, isRefreshing, onToggleColConfig, colConfigActive,
   tickets, nowMs, staleHours, accentHue,
-  theme, onThemeChange,
+  theme, onThemeChange, onStatsOpenTicket,
 }: TopBarProps) {
   const [showPrefs, setShowPrefs] = useState(false);
   const { user, colleagues, viewedAgentId, setViewedAgentId, logout } = useAuth();
@@ -211,7 +212,13 @@ export function TopBar({
       <div style={{ flex: 1 }} />
 
       {/* stats */}
-      <StatsBar tickets={tickets} nowMs={nowMs} staleHours={staleHours} accentHue={accentHue} />
+      <StatsBar
+        tickets={tickets}
+        nowMs={nowMs}
+        staleHours={staleHours}
+        accentHue={accentHue}
+        onOpenTicket={onStatsOpenTicket}
+      />
 
       {/* current user + logout */}
       {user && (
