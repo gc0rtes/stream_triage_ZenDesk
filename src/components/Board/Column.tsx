@@ -6,8 +6,126 @@ import { DENSITY_PRESETS } from '../../theme';
 import {
   IconFlame, IconDot, IconLinear, IconSparkle,
   IconHourglass, IconCheck, IconAlert, IconPlus, IconChevronLeft, IconSort,
+  IconInfo,
 } from '../icons';
 import { TicketCard } from './TicketCard';
+import { getColumnCriteriaLines } from '../../utils/columnCriteria';
+
+function ColumnCriteriaTooltip({
+  colKey,
+  staleHours,
+  variant = 'inline',
+}: {
+  colKey: ColumnKey;
+  staleHours: number;
+  variant?: 'inline' | 'sidebar';
+}) {
+  const [show, setShow] = useState(false);
+  const lines = getColumnCriteriaLines(colKey, staleHours);
+  const panel = (
+    <div
+      role="tooltip"
+      style={{
+        width: variant === 'sidebar' ? 252 : 272,
+        maxHeight: variant === 'sidebar' ? 'min(70vh, 320px)' : undefined,
+        overflowY: variant === 'sidebar' ? 'auto' : undefined,
+        padding: '10px 12px',
+        background: 'var(--surface)',
+        border: '1px solid var(--border)',
+        borderRadius: 8,
+        boxShadow: '0 10px 32px rgba(0,0,0,0.5)',
+      }}
+    >
+      {lines.map((line, i) => (
+        <p
+          key={i}
+          style={{
+            margin: 0,
+            marginTop: i ? 8 : 0,
+            fontSize: 11,
+            lineHeight: 1.5,
+            color: 'var(--text)',
+          }}
+        >
+          {line}
+        </p>
+      ))}
+    </div>
+  );
+
+  if (variant === 'sidebar') {
+    return (
+      <span
+        style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}
+        onMouseEnter={() => setShow(true)}
+        onMouseLeave={() => setShow(false)}
+      >
+        <button
+          type="button"
+          aria-label="How tickets are routed into this column"
+          style={{
+            background: 'transparent',
+            border: 'none',
+            cursor: 'help',
+            padding: 2,
+            borderRadius: 4,
+            lineHeight: 0,
+            display: 'inline-flex',
+            color: 'var(--text-mute)',
+          }}
+        >
+          <IconInfo size={11} />
+        </button>
+        {show && (
+          <div style={{
+            position: 'absolute',
+            left: '100%',
+            top: -4,
+            marginLeft: 8,
+            zIndex: 100,
+          }}
+          >
+            {panel}
+          </div>
+        )}
+      </span>
+    );
+  }
+
+  return (
+    <span
+      style={{
+        position: 'relative',
+        display: 'inline-flex',
+        alignItems: 'center',
+      }}
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+    >
+      <button
+        type="button"
+        aria-label="How tickets are routed into this column"
+        style={{
+          background: show ? 'var(--surface-2)' : 'transparent',
+          border: '1px solid transparent',
+          cursor: 'help',
+          padding: 2,
+          borderRadius: 4,
+          lineHeight: 0,
+          display: 'inline-flex',
+          color: 'var(--text-mute)',
+        }}
+      >
+        <IconInfo size={12} />
+      </button>
+      {show && (
+        <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, zIndex: 100 }}>
+          {panel}
+        </div>
+      )}
+    </span>
+  );
+}
 
 const SORT_OPTIONS: Array<{ value: SortMode; label: string; hint: string }> = [
   { value: 'newest', label: 'Newest first', hint: 'Most recently updated' },
@@ -95,7 +213,10 @@ export function Column({
         onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--accent)' }}
         onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border)' }}
       >
-        {colIcon[col.key]}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          {colIcon[col.key]}
+          <ColumnCriteriaTooltip colKey={col.key} staleHours={staleHours} variant="sidebar" />
+        </div>
         <span style={{
           writingMode: 'vertical-rl', transform: 'rotate(180deg)',
           fontSize: 11, fontWeight: 600, color: 'var(--text)',
@@ -132,10 +253,12 @@ export function Column({
         borderBottom: '1px solid var(--border)',
         background: 'var(--surface)',
         position: 'relative',
+        zIndex: 12,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             {colIcon[col.key]}
+            <ColumnCriteriaTooltip colKey={col.key} staleHours={staleHours} />
             <span style={{
               fontSize: 12, fontWeight: 600, color: 'var(--text)',
               letterSpacing: 0.1, whiteSpace: 'nowrap',
@@ -239,6 +362,8 @@ export function Column({
         flex: 1, overflow: 'auto', padding: 10,
         display: 'flex', flexDirection: 'column', gap: d.rowGap,
         scrollbarWidth: 'thin',
+        position: 'relative',
+        zIndex: 1,
       }}>
         {count === 0 && (
           <div style={{

@@ -198,7 +198,7 @@ export function TopBar({
               {user.name.split(' ').map((p: string) => p[0]).join('').toUpperCase().slice(0, 2)}
             </button>
           )}
-          {colleagues.map(agent => (
+          {colleagues.filter(a => a.id !== user?.id).map(agent => (
             <ColleagueChip
               key={agent.id}
               agent={agent}

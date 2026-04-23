@@ -100,6 +100,22 @@ export function IconDot(p: BaseIconProps) {
   return <Icon {...p} fill="currentColor" stroke="none" path={<circle cx="12" cy="12" r="4"/>} />;
 }
 
+/** Circle “i” for column routing / help tooltips */
+export function IconInfo(p: BaseIconProps) {
+  return (
+    <Icon
+      {...p}
+      path={
+        <>
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 16v-5" />
+          <circle cx="12" cy="7.5" r=".75" fill="currentColor" stroke="none" />
+        </>
+      }
+    />
+  );
+}
+
 export function IconColumns(p: BaseIconProps) {
   return <Icon {...p} path={<><rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="3" width="5" height="18" rx="1"/><rect x="17" y="3" width="4" height="18" rx="1"/></>} />;
 }
