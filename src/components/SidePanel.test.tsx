@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SidePanel } from './SidePanel';
-import { SEED_TICKETS } from '../mocks/fixtures/tickets';
+import { SEED_TICKETS } from '../fixtures/tickets';
 
 const ticket = SEED_TICKETS[0];
 const nowMs = Date.now();

@@ -32,7 +32,7 @@ src/
 │   └── TweaksPanel.tsx # floating design tweaks (accent, density, stale cutoff)
 ├── data/             # COLUMNS, TIER_META, ASSIGNEES constants
 ├── hooks/            # useTickets, useUpdateTicket, useNow
-├── mocks/            # MSW handlers + SEED_TICKETS fixtures
+├── fixtures/         # SEED_TICKETS (tests / generator only)
 ├── theme.ts          # ACCENT_PRESETS, DENSITY_PRESETS, makeCssVars()
 ├── types/            # Ticket interface, ColumnKey type
 └── utils/            # classifyTicket, timeSince
