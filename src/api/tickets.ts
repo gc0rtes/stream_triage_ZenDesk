@@ -211,6 +211,22 @@ async function fetchNameMaps(rawTickets: RawZDTicket[]): Promise<SideloadMaps> {
   };
 }
 
+/** Parallel ZD searches can return the same ticket twice; keep one row (latest `updated_at`). */
+function dedupeRawZDTicketsByLatestUpdate(raw: RawZDTicket[]): RawZDTicket[] {
+  const map = new Map<number, RawZDTicket>();
+  for (const t of raw) {
+    const prev = map.get(t.id);
+    if (!prev) {
+      map.set(t.id, t);
+      continue;
+    }
+    const nextMs = new Date(t.updated_at).getTime();
+    const prevMs = new Date(prev.updated_at).getTime();
+    if (nextMs >= prevMs) map.set(t.id, t);
+  }
+  return [...map.values()];
+}
+
 export async function fetchTickets(agentId?: number): Promise<Ticket[]> {
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 3600_000)
     .toISOString()
@@ -228,14 +244,14 @@ export async function fetchTickets(agentId?: number): Promise<Ticket[]> {
       zdSearch(`type:ticket ${me} status:solved updated>${sevenDaysAgo}`, 50),
     ]);
 
-  const allRaw = [
+  const allRaw = dedupeRawZDTicketsByLatestUpdate([
     ...myOpen.results,
     ...myPending.results,
     ...myHold.results,
     ...myNew.results,
     ...unassigned.results,
     ...mySolved.results,
-  ];
+  ]);
 
   const maps = await fetchNameMaps(allRaw);
   return allRaw.map((t) => mapZDTicket(t, maps));
