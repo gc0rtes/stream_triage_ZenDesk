@@ -492,16 +492,9 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
   const [showCc, setShowCc] = useState(false)
   const [showStatusMenu, setShowStatusMenu] = useState(false)
   const [showMacroMenu, setShowMacroMenu] = useState(false)
-  const [expanded, setExpanded] = useState(
-    () => localStorage.getItem('zd-panel-expanded') === 'true'
-  )
-  const [panelWidth, setPanelWidth] = useState(
-    () => Number(localStorage.getItem('zd-panel-width')) || 640
-  )
   const [editorHeight, setEditorHeight] = useState(
     () => Number(localStorage.getItem('zd-editor-h')) || 120
   )
-  const isResizing = useRef(false)
   // Pending property changes — flushed to ZD only on submit
   const [pendingAssigneeId, setPendingAssigneeId] = useState<number | null | undefined>(undefined)
   const [pendingFields, setPendingFields] = useState<Record<number, CustomFieldValue['value']>>({})
@@ -573,12 +566,6 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
     if (!el || !stickToBottomRef.current) return
     el.scrollTop = el.scrollHeight
   }, [comments.length])
-
-  const toggleExpanded = () => {
-    const next = !expanded
-    setExpanded(next)
-    localStorage.setItem('zd-panel-expanded', String(next))
-  }
 
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? [])
@@ -704,15 +691,6 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
           background: 'var(--surface-2)', borderRadius: 3, border: '1px solid var(--border)',
         }}>{ticket.status}</span>
         <div style={{ flex: 1 }} />
-        <button
-          onClick={toggleExpanded}
-          title={expanded ? 'Collapse' : 'Expand'}
-          style={{
-            fontSize: 13, color: 'var(--text-dim)', background: 'transparent',
-            padding: '4px 8px', borderRadius: 4, border: '1px solid var(--border)',
-            cursor: 'pointer', lineHeight: 1,
-          }}
-        >{expanded ? '⊟' : '⊞'}</button>
         <a
           href={`https://getstream.zendesk.com/agent/tickets/${ticket.id}`}
           target="_blank" rel="noreferrer"
@@ -1061,82 +1039,27 @@ export function SidePanel({ ticket, onClose, nowMs }: SidePanelProps) {
     </div>
   )
 
-  // Expanded: centered modal with backdrop + properties panel
-  if (expanded) {
-    return (
-      <div style={{
-        position: 'fixed', inset: 0, zIndex: 60,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: 'rgba(0,0,0,0.6)',
-      }}>
-        <div style={{
-          width: '92vw', maxWidth: 1200, height: '90vh',
-          display: 'flex', borderRadius: 8, overflow: 'hidden',
-          boxShadow: '0 24px 80px rgba(0,0,0,0.55)',
-          border: '1px solid var(--border)',
-        }}>
-          <TicketPropertiesPanel
-            ticket={ticket} full={full}
-            pendingAssigneeId={pendingAssigneeId}
-            onAssigneeChange={setPendingAssigneeId}
-            pendingFields={pendingFields}
-            onFieldChange={(id, val) => setPendingFields(prev => ({ ...prev, [id]: val }))}
-            submitting={reply.isPending}
-            onTakeIt={() => setPendingAssigneeId(getMyAssigneeId())}
-          />
-          {conversationCol}
-        </div>
-      </div>
-    )
-  }
-
-  const startResize = (e: React.MouseEvent) => {
-    e.preventDefault()
-    isResizing.current = true
-    const startX = e.clientX
-    const startW = panelWidth
-
-    const onMove = (ev: MouseEvent) => {
-      if (!isResizing.current) return
-      const next = Math.max(380, Math.min(window.innerWidth - 80, startW + (startX - ev.clientX)))
-      setPanelWidth(next)
-    }
-    const onUp = (ev: MouseEvent) => {
-      isResizing.current = false
-      const final = Math.max(380, Math.min(window.innerWidth - 80, startW + (startX - ev.clientX)))
-      localStorage.setItem('zd-panel-width', String(final))
-      window.removeEventListener('mousemove', onMove)
-      window.removeEventListener('mouseup', onUp)
-      document.body.style.cursor = ''
-      document.body.style.userSelect = ''
-    }
-
-    document.body.style.cursor = 'ew-resize'
-    document.body.style.userSelect = 'none'
-    window.addEventListener('mousemove', onMove)
-    window.addEventListener('mouseup', onUp)
-  }
-
-  // Drawer: right panel
   return (
-    <div data-sidepanel style={{
-      position: 'fixed', top: 0, right: 0, bottom: 0, width: panelWidth,
-      background: 'var(--bg-2)', borderLeft: '1px solid var(--border)',
-      boxShadow: '-16px 0 40px rgba(0,0,0,0.45)',
-      display: 'flex', flexDirection: 'row', zIndex: 60,
-      animation: 'slideIn 0.2s ease-out',
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 60,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'rgba(0,0,0,0.6)',
     }}>
-      {/* Resize handle */}
-      <div
-        onMouseDown={startResize}
-        style={{
-          position: 'absolute', left: 0, top: 0, bottom: 0, width: 5,
-          cursor: 'ew-resize', zIndex: 10,
-        }}
-        onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = 'var(--accent)'; (e.currentTarget as HTMLDivElement).style.opacity = '0.4' }}
-        onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = 'transparent' }}
-      />
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+      <div style={{
+        width: '92vw', maxWidth: 1200, height: '90vh',
+        display: 'flex', borderRadius: 8, overflow: 'hidden',
+        boxShadow: '0 24px 80px rgba(0,0,0,0.55)',
+        border: '1px solid var(--border)',
+      }}>
+        <TicketPropertiesPanel
+          ticket={ticket} full={full}
+          pendingAssigneeId={pendingAssigneeId}
+          onAssigneeChange={setPendingAssigneeId}
+          pendingFields={pendingFields}
+          onFieldChange={(id, val) => setPendingFields(prev => ({ ...prev, [id]: val }))}
+          submitting={reply.isPending}
+          onTakeIt={() => setPendingAssigneeId(getMyAssigneeId())}
+        />
         {conversationCol}
       </div>
     </div>
